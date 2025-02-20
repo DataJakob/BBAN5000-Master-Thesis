@@ -21,6 +21,7 @@ class MarkowitzPT():
         self.num_sectors: int = len(data)
         self.opt_results: list = []
 
+        self.returns: list = []
         self.frequency_weights:list = []
         
         
@@ -38,6 +39,7 @@ class MarkowitzPT():
                 sector_mean_list.append(mean)
             mean_list.append(sector_mean_list)
         mean_list = [item for row in mean_list for item in row]
+        self.returns = mean_list
     
         # Generate a list of standard deviations
         std_list = []
