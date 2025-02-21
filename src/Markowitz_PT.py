@@ -99,4 +99,3 @@ class MarkowitzPT():
         self.frequency_weights = frequency_weigths_list
     
         print("--Frequency trading using MPT successfully performed--")
-        

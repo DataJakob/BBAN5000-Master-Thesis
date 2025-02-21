@@ -40,7 +40,3 @@ class BHBAnalyzer():
         mpt_perf = [daily_exp_weights@daily_returns[time] for time in range(self.periods)]
         excess_ret = [rl_perf[time]-mpt_perf[time] for time in range(self.periods)]
         self.geo_excess_return = excess_ret
-
-
-
-        pass
