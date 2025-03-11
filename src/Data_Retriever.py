@@ -1,5 +1,7 @@
 import yfinance as yf
 import pandas as pd
+import itertools
+
 
 
 class DataRetriever():
@@ -22,12 +24,14 @@ class DataRetriever():
 
                 # Retrieve stock prices from yahoo finance
                 ind_yf_data = yf.download(str(self.sector_df[self.sectors[sector]][stock]), 
-                                          start=self.start_date, end=self.end_date)["Close"]
-                sector_list.append(ind_yf_data)   
+                                          start=self.start_date, end=self.end_date)
+                double_data = [[float(ind_yf_data["Open"].iloc[i].iloc[0]), float(ind_yf_data["Close"].iloc[i].iloc[0])] for i in range(len(ind_yf_data))]
+                flatten_data = np.array(list(itertools.chain(*double_data)))
+                sector_list.append(flatten_data)   
 
                 # Transform the stock prices into returns
-                ind_yf_data_return = ind_yf_data.shift(1)/ind_yf_data
-                ind_yf_data_return.iloc[0] = 1
+                ind_yf_data_return = np.roll(flatten_data,1)/flatten_data
+                ind_yf_data_return[0] = 1
                 sector_list_return.append(ind_yf_data_return)
 
             self.raw_data.append(sector_list)
