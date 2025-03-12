@@ -43,6 +43,8 @@ class MarkowitzPT():
 
         self.num_stocks: int = len(data) * len(data[0])
         self.num_sectors: int = len(data)
+        self.num_stocks_per_sector = int(self.num_stocks / self.num_sectors)
+
         self.opt_results: list = []
 
         self.returns: list = []
@@ -63,11 +65,16 @@ class MarkowitzPT():
             - ret : float, expected return of the optimized portfolio.
             - risk : float, standard deviation of the optimized portfolio.       
         """
+        simple_array = [pd.Series(stock) for sector in new_data for stock in sector]
+        dataframe = pd.DataFrame(simple_array)
+        transpose_df = dataframe.T
+
         # Generate a list of means
-        mean_list = [arr.mean() for arr in new_data[0]]
+        mean_list = transpose_df.mean()
 
         # Create a default covariance matrix    
-        cov_matrix = pd.DataFrame(new_data[0]).T.cov()
+        cov_matrix = transpose_df.cov()
+
 
         c1 = Bounds(0,1)
         c2 = LinearConstraint(np.ones((self.num_stocks,), dtype=int),1,1)
