@@ -33,7 +33,7 @@ class BHBAnalyzer():
         daily_returns = []
         for time in range(1, self.n_trading_times, 1):
             # i=stocks, j=sectors
-            ind_day_ret = np.array([self.raw_data[i][j].iloc[-time].iloc[0] for i in  range(self.num_sectors) for j in range(self.num_stocks_per_sector)]) -1
+            ind_day_ret = np.array([self.raw_data[i][j][-time] for i in  range(self.num_sectors) for j in range(self.num_stocks_per_sector)]) -1
 
             daily_returns.append(ind_day_ret[::])
             daily_returns = daily_returns[::-1]
