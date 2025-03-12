@@ -12,23 +12,14 @@ class MarkowitzPT():
     A class implementing a frequency-based Markowitz Portfolio Theory (MPT) optimization framework.
     
     Attributes
-        data : list
-            Nested list of numpy arrays structured as `[Sector1, Sector2, ..., SectorN]`, where each `Sector`
-            contains a list of numpy arrays representing historical returns of individual stocks.
-        history_usage : int
-            Number of historical data points to use for each optimization.
-        n_optimizations : int
-            Number of optimization intervals to perform over the historical data.
-        num_stocks : int
-            Total number of stocks across all sectors.
-        num_sectors : int
-            Number of sectors in the portfolio.
-        opt_results : list
-            Stores the results of the most recent portfolio optimization: [weights, expected return, risk].
-        returns : list
-            Stores the expected returns calculated for each optimization interval.
-        frequency_weights : list
-            A list of optimized weights for each time interval, produced by the `generate_new_positions()` method.
+        data : list, nested array with sectors X stocks
+        history_usage : int, number of historical data points to use for each optimization.
+        n_optimizations : int, number of optimization intervals to perform over the historical data.
+        num_stocks : int, number of stocks across all sectors.
+        num_sectors : int, number of sectors in the portfolio.
+        opt_results : list,  results of the most recent portfolio optimization: [weights, expected return, risk].
+        returns : list, expected returns calculated for each optimization interval.
+        frequency_weights : list, optimized weights for each time interval
 
     Methods
         optimize_portfolio(new_data=None)
@@ -98,9 +89,7 @@ class MarkowitzPT():
         Generate new stock positions for each time interval using frequency trading and MPT.
 
         Attributes
-        frequency_weights : list
-            A list containing the optimized weights for each time interval. Each element of the list corresponds 
-            to a specific time interval's optimal stock weights obtained via `optimize_portfolio`.
+            frequency_weights : list, optimized weights for n times.
 
         Returns
             str: A success message indicating that the data was successfully generated.
