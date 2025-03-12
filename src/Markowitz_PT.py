@@ -102,7 +102,7 @@ class MarkowitzPT():
                 time_sliced = []
                 for time in range(self.data[0][0].shape[0]): # For each time interval
                     # Relevant histroical data for stock to be optimized
-                    data_per_time_interval = stock[-self.history_usage-self.n_optimizations+time:-self.n_optimizations+time]
+                    data_per_time_interval = stock[-self.history_usage-self.n_optimizations+time-1:-self.n_optimizations+time-1]
                     time_sliced.append(data_per_time_interval)
                 sector_sliced.append(time_sliced)  
             sliced_data.append(sector_sliced)  
