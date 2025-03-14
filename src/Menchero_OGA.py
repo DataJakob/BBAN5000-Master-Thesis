@@ -1,3 +1,8 @@
+import pandas as pd
+import numpy as np
+
+
+
 class MencheroOGA():
     """
     one-liner
@@ -36,12 +41,12 @@ class MencheroOGA():
         Returns
         """
         # Returns and weights on sector level for  benchmark
-        rb = np.array([wb[i*n_stocks:(i+1) * n_stocks]@ret[int(i*n_stocks):(i+1)*n_stocks] for i in range(n_sec)])
-        wb = np.array([sum(wb[i*n_stocks:(i+1)*n_stocks]) for i in range(n_sec)])
+        rb = np.array([wb[i*self.n_stocks:(i+1) * self.n_stocks]@ret[int(i*self.n_stocks):(i+1)*self.n_stocks] for i in range(self.n_sectors)])
+        wb = np.array([sum(wb[i*self.n_stocks:(i+1)*self.n_stocks]) for i in range(self.n_sectors)])
         
         # Returns and weights on sector level for portfolio
-        re = np.array([we[i*n_stocks:(i+1)*n_stocks]@ret[int(i*n_stocks):(i+1)*n_stocks] for i in range(n_sec)])
-        we = np.array([sum(we[i*n_stocks:(i+1)*n_stocks]) for i in range(n_sec)])
+        re = np.array([we[i*self.n_stocks:(i+1)*self.n_stocks]@ret[int(i*self.n_stocks):(i+1)*self.n_stocks] for i in range(self.n_sectors)])
+        we = np.array([sum(we[i*self.n_stocks:(i+1)*self.n_stocks]) for i in range(self.n_sectors)])
 
         # Total portfolio and benchmark return
         Re = np.dot(we,re)
@@ -80,20 +85,20 @@ class MencheroOGA():
         relevant_return_list = [return_tdf.iloc[-self.n_optimizations+i] for i in range(self.n_optimizations)]
         # relevant_benW_list = self.benchmark_w
 
+
         # MOCK DATA SO FAR!!!
         total_n_stocks = self.n_stocks * self.n_sectors
         relevant_expW_list = [[np.repeat(1/total_n_stocks, total_n_stocks)] for i in range(self.n_optimizations)]
 
+
         allocation_list = []
         selection_list = []
-
         for time in range(self.n_optimizations):
             # print(relevant_expW_list[time][0])
-            effects = analyzer_time_t(relevant_return_list[time], self.benchmark_w[time][0], relevant_expW_list[time][0])
+            effects = analyzer_time_t(relevant_return_list[time], relevant_expW_list[time][0], self.benchmark_w[time][0])
             allocation_list.append(effects[0])
             selection_list.append(effects[1])
         
         self.allocation_effects = np.concatenate(allocation_list)
         self.selection_effects = np.concatenate(selection_list)
-
         print("--Frequency analysis performed succesfully--")

@@ -72,9 +72,9 @@ class DataRetriever():
                 sector_list.append(flatten_data)   
 
                 # Transform the stock prices into returns
-                ind_yf_data_return = np.roll(flatten_data,1)/flatten_data
-                ind_yf_data_return[0] = 1
-                sector_list_return.append(ind_yf_data_return)
+                ind_yf_data_return = np.diff(flatten_data)  / flatten_data[:-1]
+                ind_yf_data_return_final = np.insert(ind_yf_data_return, 0, 0)
+                sector_list_return.append(ind_yf_data_return_final)
 
                 # On command: print data availability for each stock
                 if log == True:
