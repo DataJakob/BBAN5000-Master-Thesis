@@ -71,6 +71,7 @@ class MarkowitzPT():
         c2 = LinearConstraint(np.ones((self.num_stocks,), dtype=int),1,1)
         weights =  np.ones(self.num_stocks)
         decVar = weights / np.sum(weights)
+        print("decvar:",decVar)
 
         Z = lambda w: np.sqrt(w@cov_matrix@w.T)
         res = minimize(Z, decVar, method="trust-constr", constraints=c2, bounds=c1)
@@ -114,6 +115,9 @@ class MarkowitzPT():
             
             selective_time_data = [sliced_data[i][j][y] for i in range(self.num_sectors) for j in range(int(self.num_stocks/self.num_sectors))]
             ideal_matrix_format = [selective_time_data[i:i+int(self.num_stocks/self.num_sectors)] for i in range(0, len(selective_time_data), self.num_sectors)]
+            print("mat form:", len(ideal_matrix_format))
+            print("mat form:", len(ideal_matrix_format[0][0]))
+
             ind_weights = self.optimize_portfolio(ideal_matrix_format)
             frequency_weigths_list.append(ind_weights)
         self.frequency_weights = frequency_weigths_list

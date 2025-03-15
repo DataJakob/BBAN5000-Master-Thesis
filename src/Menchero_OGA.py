@@ -41,12 +41,12 @@ class MencheroOGA():
         Returns
         """
         # Returns and weights on sector level for  benchmark
-        rb = np.array([wb[i*self.n_stocks:(i+1) * self.n_stocks]@ret[int(i*self.n_stocks):(i+1)*self.n_stocks] for i in range(self.n_sectors)])
-        wb = np.array([sum(wb[i*self.n_stocks:(i+1)*self.n_stocks]) for i in range(self.n_sectors)])
+        rb = np.array([wb[int(i*self.n_stocks):int((i+1) * self.n_stocks)]@ret[int(i*self.n_stocks):int((i+1)*self.n_stocks)] for i in range(self.n_sectors)])
+        wb = np.array([sum(wb[int(i*self.n_stocks):int((i+1)*self.n_stocks)]) for i in range(self.n_sectors)])
         
         # Returns and weights on sector level for portfolio
-        re = np.array([we[i*self.n_stocks:(i+1)*self.n_stocks]@ret[int(i*self.n_stocks):(i+1)*self.n_stocks] for i in range(self.n_sectors)])
-        we = np.array([sum(we[i*self.n_stocks:(i+1)*self.n_stocks]) for i in range(self.n_sectors)])
+        re = np.array([we[int(i*self.n_stocks):int((i+1)*self.n_stocks)]@ret[int(i*self.n_stocks):int((i+1)*self.n_stocks)] for i in range(self.n_sectors)])
+        we = np.array([sum(we[int(i*self.n_stocks):int((i+1)*self.n_stocks)]) for i in range(self.n_sectors)])
 
         # Total portfolio and benchmark return
         Re = np.dot(we,re)
@@ -70,7 +70,7 @@ class MencheroOGA():
 
 
 
-    def frequnecy_analyzer(self):
+    def frequency_analyser(self):
         """
         One liner
         
@@ -95,7 +95,7 @@ class MencheroOGA():
         selection_list = []
         for time in range(self.n_optimizations):
             # print(relevant_expW_list[time][0])
-            effects = analyzer_time_t(relevant_return_list[time], relevant_expW_list[time][0], self.benchmark_w[time][0])
+            effects = self.analyzer_time_t(relevant_return_list[time], relevant_expW_list[time][0], self.benchmark_w[time][0])
             allocation_list.append(effects[0])
             selection_list.append(effects[1])
         
