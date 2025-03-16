@@ -44,7 +44,7 @@ Now, the "MyVenv" should work as a kernel. Before running a jupyter notebook, ch
   <br>
   ❌ Reinforcement Learning Algorithm Portfolio
   <br>
-  ✅ BHB model 
+  ✅ OGA model 
   <br>
   ❌ Result analysis 
 </p>
