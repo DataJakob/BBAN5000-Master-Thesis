@@ -67,6 +67,8 @@ class DataRetriever():
                 # Retrieve stock prices from yahoo finance
                 ind_yf_data = yf.download(str(self.sector_df[self.sectors[sector]][stock]), 
                                           start=self.start_date, end=self.end_date)
+                # Handling missing data
+                ind_yf_data = ind_yf_data.interpolate(method='linear').ffill().bfill()
                 double_data = [[float(ind_yf_data["Open"].iloc[i].iloc[0]), float(ind_yf_data["Close"].iloc[i].iloc[0])] for i in range(len(ind_yf_data))]
                 flatten_data = np.array(list(itertools.chain(*double_data)))
                 sector_list.append(flatten_data)   
