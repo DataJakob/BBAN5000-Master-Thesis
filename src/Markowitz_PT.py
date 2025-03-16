@@ -56,24 +56,20 @@ class MarkowitzPT():
             - ret : float, expected return of the optimized portfolio.
             - risk : float, standard deviation of the optimized portfolio.       
         """
-        simple_array = [pd.Series(stock) for sector in new_data for stock in sector]
-        dataframe = pd.DataFrame(simple_array)
-        transpose_df = dataframe.T
 
         # Generate a list of means
-        mean_list = transpose_df.mean()
+        mean_list = new_data.mean()
 
-        # Create a default covariance matrix    
-        cov_matrix = transpose_df.cov()
+        # Create a default covariance matrix   
+        cov_matrix = new_data.cov()
 
 
         c1 = Bounds(0,1)
         c2 = LinearConstraint(np.ones((self.num_stocks,), dtype=int),1,1)
         weights =  np.ones(self.num_stocks)
         decVar = weights / np.sum(weights)
-        print("decvar:",decVar)
-
-        Z = lambda w: np.sqrt(w@cov_matrix@w.T)
+        
+        Z = lambda w: np.sqrt(max(w @ cov_matrix @ w.T, 0))
         res = minimize(Z, decVar, method="trust-constr", constraints=c2, bounds=c1)
         w = res.x
         ret = sum(w*mean_list)
@@ -101,25 +97,24 @@ class MarkowitzPT():
             sector_sliced = []
             for stock in sector:  # For each stock
                 time_sliced = []
-                for time in range(self.data[0][0].shape[0]): # For each time interval
+                # for time in range(self.data[0][0].shape[0]): # For each time interval
+
+                for time in range(self.n_optimizations): # For each time interval
                     # Relevant histroical data for stock to be optimized
                     data_per_time_interval = stock[-self.history_usage-self.n_optimizations+time-1:-self.n_optimizations+time-1]
                     time_sliced.append(data_per_time_interval)
                 sector_sliced.append(time_sliced)  
             sliced_data.append(sector_sliced)  
             # Sector X Stock X n observation
+            # sliced_data[0][0][0] = 1st_sector 1st_stock 1_st xth data points for optimization
 
 
-        frequency_weigths_list = []
+        frequency_weights_list = []
         for y in range(0, self.n_optimizations,1):
-            
-            selective_time_data = [sliced_data[i][j][y] for i in range(self.num_sectors) for j in range(int(self.num_stocks/self.num_sectors))]
-            ideal_matrix_format = [selective_time_data[i:i+int(self.num_stocks/self.num_sectors)] for i in range(0, len(selective_time_data), self.num_sectors)]
-            print("mat form:", len(ideal_matrix_format))
-            print("mat form:", len(ideal_matrix_format[0][0]))
-
-            ind_weights = self.optimize_portfolio(ideal_matrix_format)
-            frequency_weigths_list.append(ind_weights)
-        self.frequency_weights = frequency_weigths_list
+            dataframe = pd.DataFrame([sliced_data[sector][stock][y] for sector in range(self.num_sectors) for stock in range(self.num_stocks_per_sector)])
+            transposed_df = dataframe.T   
+            ind_weights = self.optimize_portfolio(transposed_df)
+            frequency_weights_list.append(ind_weights)
+        self.frequency_weights = frequency_weights_list
         
         print("--Frequency trading using MPT successfully performed--")
