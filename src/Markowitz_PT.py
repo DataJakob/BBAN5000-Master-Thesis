@@ -116,5 +116,6 @@ class MarkowitzPT():
             ind_weights = self.optimize_portfolio(transposed_df)
             frequency_weights_list.append(ind_weights)
         self.frequency_weights = frequency_weights_list
+        # The weights are based for time-1. So the latest weights are for latest day
         
         print("--Frequency trading using MPT successfully performed--")
