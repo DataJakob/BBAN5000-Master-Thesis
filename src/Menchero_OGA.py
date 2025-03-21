@@ -120,8 +120,8 @@ class MencheroOGA():
 
 
         # MOCK DATA SO FAR!!!
-        total_n_stocks = self.n_stocks * self.n_sectors
-        relevant_expW_list = [[np.repeat(1/total_n_stocks, total_n_stocks)] for i in range(self.n_optimizations)]
+        # total_n_stocks = self.n_stocks * self.n_sectors
+        # relevant_expW_list = self.experimental_w
 
 
         allocation_list = []
@@ -129,8 +129,9 @@ class MencheroOGA():
         for time in range(self.n_optimizations):
             # print(relevant_expW_list[time][0])
             effects = self.analyzer_at_time_t(relevant_return_list[time], 
-                                              relevant_expW_list[time][0],
-                                              self.benchmark_w[time][0])
+                                              np.array(self.experimental_w.iloc[time]),
+                                              np.array(self.benchmark_w[time][0]))
+                                              
             selection_list.append(effects[0])
             allocation_list.append(effects[1])
         

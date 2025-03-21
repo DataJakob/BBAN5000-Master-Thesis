@@ -60,26 +60,38 @@ def train_agent(env, learning_rate=0.001, episodes=100):
 
 
 
-def test_agent(env, model):
+import pandas as pd
+
+def test_agent(env, model, save_path="weights_per_step.csv"):
     weights_per_step_test = []
+    time_steps = []
 
     obs, _ = env.reset()
     obs = th.tensor(obs, dtype=th.float32)
     done = False
     total_reward = 0
-    
+    step = 0  # Track the step index for saving purposes
+
     while not done:
         with th.no_grad():  # Disable gradient calculation for testing
             action_probs = model(obs)
-        
+
         action = action_probs.squeeze().numpy()
         obs, reward, done, _, _ = env.step(action)
         obs = th.tensor(obs, dtype=th.float32)
-        
-        # Store model weights at this step
-        weights_per_step_test.append(model.state_dict())  # Store the model's weights
 
+        # Store the action probabilities (portfolio weights)
+        weights_per_step_test.append(action)
+        time_steps.append(step)
+        
         total_reward += reward
+        step += 1
+
+    # Save weights to a CSV file
+    df = pd.DataFrame(weights_per_step_test, columns=[f"Stock_{i}" for i in range(len(action))])
+    df.insert(0, "Time_Step", time_steps)
+    df.to_csv(save_path, index=False)
 
     print(f"Total Test Reward: {total_reward}")
+    print(f"Weights saved to {save_path}")
     return weights_per_step_test
