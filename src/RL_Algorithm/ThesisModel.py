@@ -10,7 +10,9 @@ from sklearn.model_selection import train_test_split
 from RL_Algorithm.ThesisEnvironment import PortfolioEnvironment as PorEnv
 
 class RL_Model():
-
+    """
+    Doc string 
+    """
     def __init__(self, esg_data):
         self.stock_prices = pd.read_csv("../Data/StockPrices.csv")
         self.esg_data = esg_data
@@ -26,12 +28,13 @@ class RL_Model():
         stock_data_train, stock_data_test = train_test_split(
             self.stock_prices, test_size=0.2, shuffle=False
         )
-        
+        """
+        Doc string
+        """
         self.train_data = stock_data_train
         self.test_data = stock_data_test
 
-
-        train_env = PorEnv(stock_data_train, self.esg_data, max_steps=100, window_size=10, esg_threshold=27)
+        train_env = PorEnv(stock_data_train, self.esg_data, max_steps=100, window_size=20, esg_threshold=27)
         train_env = DummyVecEnv([lambda: train_env])
 
         # Initialize the SAC model
@@ -51,17 +54,18 @@ class RL_Model():
             seed=42  # Random seed for reproducibility
         )
 
-        # Train the model
-        model.learn(total_timesteps=5000)
-
-        # Save the model
+        # Train, save and store
+        model.learn(total_timesteps=20000)
         model.save("RL/sac_portfolio_management")
-
         self.model = model
 
-    def test_model(self):
 
-        test_env = PorEnv(self.test_data, self.esg_data, max_steps=100, window_size=10, esg_threshold=27)
+
+    def test_model(self):
+        """
+        Doc string
+        """
+        test_env = PorEnv(self.test_data, self.esg_data, max_steps=100, window_size=20, esg_threshold=27)
         test_env = DummyVecEnv([lambda: test_env])
 
         # Initialize the testing environment
