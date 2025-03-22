@@ -71,6 +71,8 @@ class DataRetriever():
                 ind_yf_data = ind_yf_data.interpolate(method='linear').ffill().bfill()
                 double_data = [[float(ind_yf_data["Open"].iloc[i].iloc[0]), float(ind_yf_data["Close"].iloc[i].iloc[0])] for i in range(len(ind_yf_data))]
                 flatten_data = np.array(list(itertools.chain(*double_data)))
+
+
                 sector_list.append(flatten_data)   
 
                 # Transform the stock prices into returns
@@ -82,8 +84,17 @@ class DataRetriever():
                 if log == True:
                     print(self.sector_df[self.sectors[sector]][stock], "with", len(flatten_data), "observations")
 
-
             self.raw_data.append(sector_list)
             self.returns.append(sector_list_return)
 
+        prices_array =  [pd.Series(stock) for sector in self.raw_data for stock in sector]
+        prices_df = pd.DataFrame(prices_array)
+        prices_tdf = prices_df.T
+        prices_tdf.to_csv('../Data/StockPrices.csv', index=False)
+
+        return_array =  [pd.Series(stock) for sector in self.returns for stock in sector]
+        return_df = pd.DataFrame(return_array)
+        return_tdf = return_df.T
+        return_tdf.to_csv('../Data/StockReturns.csv', index=False)
+            
         return "--Data retrieved successfully--"

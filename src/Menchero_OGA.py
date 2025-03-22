@@ -41,6 +41,7 @@ class MencheroOGA():
         """
         self.benchmark_w =  benchmark_w
         self.experimental_w = experimental_w
+        self.returns = pd.read_csv("../Data/MPT_weights.csv")
 
         self.n_optimizations: int = len(self.benchmark_w)
         self.returns = returns

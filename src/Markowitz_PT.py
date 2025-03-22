@@ -27,14 +27,12 @@ class MarkowitzPT():
         generate_new_positions()
             Generates new stock positions for each time interval using MPT and stores them in `frequency_weights`.
     """
-    def __init__(self, data=None,  history_usage=None, n_optimizations=None):
-        self.data = data
+    def __init__(self,  history_usage=None, n_optimizations=None):
+        self.data = pd.read_csv("../Data/StockReturns.csv")
         self.history_usage: int = history_usage
         self.n_optimizations: int = n_optimizations
 
-        self.num_stocks: int = len(data) * len(data[0])
-        self.num_sectors: int = len(data)
-        self.num_stocks_per_sector = int(self.num_stocks / self.num_sectors)
+        self.num_stocks: int = len(self.data.iloc[0])
 
         self.opt_results: list = []
 
@@ -93,29 +91,18 @@ class MarkowitzPT():
         """
 
         sliced_data = []
-        for sector in self.data:  # For each sector
-            sector_sliced = []
-            for stock in sector:  # For each stock
-                time_sliced = []
-                # for time in range(self.data[0][0].shape[0]): # For each time interval
-
-                for time in range(self.n_optimizations): # For each time interval
-                    # Relevant histroical data for stock to be optimized
-                    data_per_time_interval = stock[-self.history_usage-self.n_optimizations+time-1:-self.n_optimizations+time-1]
-                    time_sliced.append(data_per_time_interval)
-                sector_sliced.append(time_sliced)  
-            sliced_data.append(sector_sliced)  
-            # Sector X Stock X n observation
-            # sliced_data[0][0][0] = 1st_sector 1st_stock 1_st xth data points for optimization
-
+        for time in range(self.n_optimizations,0,-1):
+            data_per_time_interval = self.data.iloc[-(self.history_usage+self.n_optimizations+1+time):-(self.n_optimizations+1+time)]
+            sliced_data.append(data_per_time_interval)
 
         frequency_weights_list = []
         for y in range(0, self.n_optimizations,1):
-            dataframe = pd.DataFrame([sliced_data[sector][stock][y] for sector in range(self.num_sectors) for stock in range(self.num_stocks_per_sector)])
-            transposed_df = dataframe.T   
-            ind_weights = self.optimize_portfolio(transposed_df)
+  
+            ind_weights = self.optimize_portfolio(sliced_data[y])
             frequency_weights_list.append(ind_weights)
         self.frequency_weights = frequency_weights_list
-        # The weights are based for time-1. So the latest weights are for latest day
+
+        only_weights = pd.DataFrame([self.frequency_weights[i][0] for i in range(len(self.frequency_weights))])
+        only_weights.to_csv('../Data/MPT_weights.csv', index=False)
         
         print("--Frequency trading using MPT successfully performed--")
