@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 import torch as th
 from torch import nn, optim
@@ -8,24 +9,61 @@ from stable_baselines3 import PPO
 
 
 class LSTMPolicy(nn.Module):
+    """
+    A PyTorch neural network model implementing an LSTM-based policy for portfolio optimization.
+
+    Attributes:
+        lstm (nn.LSTM): The LSTM layer for sequential data processing.
+        fc (nn.Linear): The fully connected layer mapping LSTM output to action probabilities.
+    
+    Methods:
+        __init__(input_size, output_size): Initializes the model architecture.
+        forward(obs): Performs a forward pass through the network.
+    """
 
 
 
     def __init__(self, input_size, output_size):
+        """
+        Initializes the LSTMPolicy model with an LSTM and a fully connected layer.
+        
+        Args:
+            input_size (int): The number of features in the input observation.
+            output_size (int): The number of actions (stocks) to produce weights for.
+        """
         super(LSTMPolicy, self).__init__()
-        self.lstm = nn.LSTM(input_size=input_size, hidden_size=128, batch_first=True)
+        self.lstm = nn.LSTM(input_size, hidden_size=128)
         self.fc = nn.Linear(128, output_size)
 
 
 
     def forward(self, obs):
+        """
+        Forward pass through the LSTM and fully connected layers.
+        
+        Args:
+            obs (torch.Tensor): The input observation of shape (sequence_length, input_size).
+
+        Returns:
+            torch.Tensor: The action probabilities representing portfolio weights.
+        """
         lstm_out, _ = self.lstm(obs.unsqueeze(0))
         action = th.softmax(self.fc(lstm_out[:, -1, :]), dim=1)
         return action
-    
 
 
 def train_agent(env, learning_rate=0.001, episodes=100):
+    """
+    Trains the LSTMPolicy model on the provided environment using a simple policy gradient method.
+    
+    Args:
+        env (gym.Env): The portfolio environment to interact with.
+        learning_rate (float): The learning rate for the optimizer.
+        episodes (int): The number of training episodes.
+
+    Returns:
+        LSTMPolicy: The trained model.
+    """
     model = LSTMPolicy(input_size=env.observation_space.shape[1], output_size=env.action_space.shape[0])
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
@@ -60,9 +98,19 @@ def train_agent(env, learning_rate=0.001, episodes=100):
 
 
 
-import pandas as pd
 
 def test_agent(env, model, save_path="weights_per_step.csv"):
+    """
+    Tests the trained model and records portfolio weights over time.
+    
+    Args:
+        env (gym.Env): The portfolio environment to test.
+        model (LSTMPolicy): The trained model to evaluate.
+        save_path (str): The file path to save the recorded weights as a CSV file.
+
+    Returns:
+        list: The list of portfolio weights at each time step during testing.
+    """
     weights_per_step_test = []
     time_steps = []
 
@@ -95,3 +143,4 @@ def test_agent(env, model, save_path="weights_per_step.csv"):
     print(f"Total Test Reward: {total_reward}")
     print(f"Weights saved to {save_path}")
     return weights_per_step_test
+
