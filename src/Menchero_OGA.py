@@ -30,7 +30,7 @@ class MencheroOGA():
             allocation and selection effects for each time step.
     """
 
-    def __init__(self, returns, benchmark_w, experimental_w):
+    def __init__(self, n_sectors, n_stocks_per_sector):
         """
         Initializes the MencheroOGA class with portfolio returns, benchmark weights, and experimental weights.
 
@@ -39,15 +39,14 @@ class MencheroOGA():
             benchmark_w (list): A nested list of benchmark weights corresponding to stocks over multiple time periods.
             experimental_w (list): A nested list of experimental/portfolio weights corresponding to stocks over multiple time periods.
         """
-        self.benchmark_w =  benchmark_w
-        self.experimental_w = experimental_w
-        self.returns = pd.read_csv("../Data/MPT_weights.csv")
+        self.benchmark_w =  pd.read_csv("../Data/MPT_weights.csv")
+        self.experimental_w = pd.read_csv("../Data/RL_weights.csv")
+        self.returns = pd.read_csv("../Data/StockReturns.csv")
 
-        self.n_optimizations: int = len(self.benchmark_w)
-        self.returns = returns
+        self.n_optimizations: int = self.benchmark_w.shape[0]
         
-        self.n_sectors = len(self.returns)
-        self.n_stocks = len(self.benchmark_w[0][0]) / self.n_sectors   # Per sector
+        self.n_sectors = n_sectors
+        self.n_stocks = n_stocks_per_sector
 
         self.allocation_effects: list = None
         self.selection_effects: list = None
@@ -111,19 +110,15 @@ class MencheroOGA():
             - Updates the 'allocation_effects' and 'selection_effects' attributes of the class.
         """
 
-        return_array =  [pd.Series(stock) for sector in self.returns for stock in sector]
-        return_df = pd.DataFrame(return_array)
-        return_tdf = return_df.T
-
-        # relevant_return_list = [return_tdf.iloc[-+i] for i in range(self.n_optimizations)]
-        relevant_return_list = [return_tdf.iloc[-i] for i in range(self.n_optimizations, 0, -1)]
+        relevant_return_list = [self.returns.iloc[-(self.n_optimizations)+time] for time in range(self.n_optimizations)]
+        relevant_exper_list = [self.experimental_w.iloc[-self.n_optimizations+time,1:] for time in range(self.n_optimizations)]
 
         allocation_list = []
         selection_list = []
         for time in range(self.n_optimizations):
             effects = self.analyzer_at_time_t(relevant_return_list[time], 
-                                              np.array(self.experimental_w.iloc[time]),
-                                              np.array(self.benchmark_w[time][0]))
+                                              np.array(relevant_exper_list[time]),
+                                              np.array(self.benchmark_w.iloc[time]))
 
             selection_list.append(effects[0])
             allocation_list.append(effects[1])
