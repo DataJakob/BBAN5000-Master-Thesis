@@ -111,7 +111,7 @@ class MencheroOGA():
         """
 
         relevant_return_list = [self.returns.iloc[-(self.n_optimizations)+time] for time in range(self.n_optimizations)]
-        relevant_exper_list = [self.experimental_w.iloc[-self.n_optimizations+time,1:] for time in range(self.n_optimizations)]
+        relevant_exper_list = [self.experimental_w.iloc[-self.n_optimizations+time,:] for time in range(self.n_optimizations)]
 
         allocation_list = []
         selection_list = []

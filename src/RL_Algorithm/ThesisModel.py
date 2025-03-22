@@ -1,146 +1,108 @@
-import numpy as np
 import pandas as pd
+import numpy as np
 
-import torch as th
-from torch import nn, optim
+from stable_baselines3 import SAC
+from stable_baselines3.common.env_util import make_vec_env
+from stable_baselines3.common.vec_env import DummyVecEnv
 
-from stable_baselines3 import PPO
+from sklearn.model_selection import train_test_split
 
+from RL_Algorithm.ThesisEnvironment import PortfolioEnvironment as PorEnv
 
+class RL_Model():
 
-class LSTMPolicy(nn.Module):
-    """
-    A PyTorch neural network model implementing an LSTM-based policy for portfolio optimization.
+    def __init__(self, esg_data):
+        self.stock_prices = pd.read_csv("../Data/StockPrices.csv")
+        self.esg_data = esg_data
 
-    Attributes:
-        lstm (nn.LSTM): The LSTM layer for sequential data processing.
-        fc (nn.Linear): The fully connected layer mapping LSTM output to action probabilities.
-    
-    Methods:
-        __init__(input_size, output_size): Initializes the model architecture.
-        forward(obs): Performs a forward pass through the network.
-    """
+        self.train_data = None
+        self.test_data = None
 
-
-
-    def __init__(self, input_size, output_size):
-        """
-        Initializes the LSTMPolicy model with an LSTM and a fully connected layer.
+        self.model = None
         
-        Args:
-            input_size (int): The number of features in the input observation.
-            output_size (int): The number of actions (stocks) to produce weights for.
-        """
-        super(LSTMPolicy, self).__init__()
-        self.lstm = nn.LSTM(input_size, hidden_size=128)
-        self.fc = nn.Linear(128, output_size)
-
-
-
-    def forward(self, obs):
-        """
-        Forward pass through the LSTM and fully connected layers.
-        
-        Args:
-            obs (torch.Tensor): The input observation of shape (sequence_length, input_size).
-
-        Returns:
-            torch.Tensor: The action probabilities representing portfolio weights.
-        """
-        lstm_out, _ = self.lstm(obs.unsqueeze(0))
-        action = th.softmax(self.fc(lstm_out[:, -1, :]), dim=1)
-        return action
-
-
-def train_agent(env, learning_rate=0.001, episodes=100):
-    """
-    Trains the LSTMPolicy model on the provided environment using a simple policy gradient method.
     
-    Args:
-        env (gym.Env): The portfolio environment to interact with.
-        learning_rate (float): The learning rate for the optimizer.
-        episodes (int): The number of training episodes.
 
-    Returns:
-        LSTMPolicy: The trained model.
-    """
-    model = LSTMPolicy(input_size=env.observation_space.shape[1], output_size=env.action_space.shape[0])
-    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-
-    for episode in range(episodes):
-        obs, _ = env.reset()
-        obs = th.tensor(obs, dtype=th.float32)
-        done = False
-        episode_rewards = []
-
-        while not done:
-            action_probs = model(obs)
-            action = action_probs.squeeze().detach().numpy()  # Get the action as a numpy array
-
-            obs, reward, done, _, _ = env.step(action)  # Pass the action directly to the environment
-            obs = th.tensor(obs, dtype=th.float32)
-
-            episode_rewards.append(reward)
-
-        # Policy Gradient Update
-        total_reward = th.tensor(sum(episode_rewards), requires_grad=True)  # Convert to PyTorch tensor
-
-        loss = -total_reward  # Simple loss function to maximize rewards
-
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-
-        if episode % 10 == 0:
-            print(f"Episode {episode} - Total Reward: {total_reward.item()}")
-
-    return model
-
-
-
-
-def test_agent(env, model, save_path="weights_per_step.csv"):
-    """
-    Tests the trained model and records portfolio weights over time.
-    
-    Args:
-        env (gym.Env): The portfolio environment to test.
-        model (LSTMPolicy): The trained model to evaluate.
-        save_path (str): The file path to save the recorded weights as a CSV file.
-
-    Returns:
-        list: The list of portfolio weights at each time step during testing.
-    """
-    weights_per_step_test = []
-    time_steps = []
-
-    obs, _ = env.reset()
-    obs = th.tensor(obs, dtype=th.float32)
-    done = False
-    total_reward = 0
-    step = 0  # Track the step index for saving purposes
-
-    while not done:
-        with th.no_grad():  # Disable gradient calculation for testing
-            action_probs = model(obs)
-
-        action = action_probs.squeeze().numpy()
-        obs, reward, done, _, _ = env.step(action)
-        obs = th.tensor(obs, dtype=th.float32)
-
-        # Store the action probabilities (portfolio weights)
-        weights_per_step_test.append(action)
-        time_steps.append(step)
+    def train_model(self):
+        stock_data_train, stock_data_test = train_test_split(
+            self.stock_prices, test_size=0.2, shuffle=False
+        )
         
-        total_reward += reward
-        step += 1
+        self.train_data = stock_data_train
+        self.test_data = stock_data_test
 
-    # Save weights to a CSV file
-    df = pd.DataFrame(weights_per_step_test, columns=[f"Stock_{i}" for i in range(len(action))])
-    df.insert(0, "Time_Step", time_steps)
-    df.to_csv(save_path, index=False)
 
-    print(f"Total Test Reward: {total_reward}")
-    print(f"Weights saved to {save_path}")
-    return weights_per_step_test
+        train_env = PorEnv(stock_data_train, self.esg_data, max_steps=100, window_size=10, esg_threshold=27)
+        train_env = DummyVecEnv([lambda: train_env])
+
+        # Initialize the SAC model
+        model = SAC(
+            policy="MlpPolicy",     # Policy type
+            policy_kwargs=dict(net_arch=[64, 64]),  # Smaller network
+            env=train_env,                # Environment
+            verbose=1,              # Printing
+            learning_rate=3e-4,     # Learning rate
+            buffer_size=1000000,    # Memory usage
+            batch_size=64,         # Batch size for training  (higher= stable updates and exploitation, and vice versa)
+            ent_coef='auto',        # Entropy coefficient (higher=more exploration, and vice versa)
+            gamma=0.99,             # Discount factor (time value of older rewards/observations)
+            tau=0.005,              # Target network update rate
+            train_freq=1,           # Train every step (higher=policy update frequency and exploitation, and vice versa)
+            gradient_steps=1,  # Gradient steps per update
+            seed=42  # Random seed for reproducibility
+        )
+
+        # Train the model
+        model.learn(total_timesteps=5000)
+
+        # Save the model
+        model.save("RL/sac_portfolio_management")
+
+        self.model = model
+
+    def test_model(self):
+
+        test_env = PorEnv(self.test_data, self.esg_data, max_steps=100, window_size=10, esg_threshold=27)
+        test_env = DummyVecEnv([lambda: test_env])
+
+        # Initialize the testing environment
+        obs = test_env.reset()
+
+        # Create a list to store the weights and portfolio values
+        weights_history = []
+        portfolio_values = []
+
+        # Run the testing loop
+        for _ in range(len(self.test_data) - 1):  # Adjust for test data length
+            # Predict the action (portfolio weights) using the trained model
+            action, _states = self.model.predict(obs, deterministic=True)
+            
+            # Normalize the action to ensure weights sum to 1
+            normalized_action = np.clip(action, 0, 1).astype("float64")  # Clip to [0, 1]
+            normalized_action /= np.sum(normalized_action)  # Normalize to sum to 1
+            
+            # Execute the action in the testing environment
+            obs, rewards, dones, info = test_env.step(normalized_action)
+            
+            # Store the normalized weights and portfolio value
+            weights_history.append(np.squeeze(normalized_action))  # Remove the extra dimension
+            portfolio_values.append(test_env.envs[0].cash)  # Access the cash value from the environment
+            
+            # Render the environment (optional)
+            test_env.render()
+            
+            # Reset the environment if the episode is done
+            if dones:
+                obs = test_env.reset()
+
+        # Convert the weights history to a DataFrame
+        weights_df = pd.DataFrame(weights_history, columns=[f"Stock_{i+1}" for i in range(test_env.envs[0].num_stocks)])
+        weights_df.to_csv("../Data/RL_weights.csv", index=False)
+
+        print("--RL weights successfully stored--")
+
+
+
+
+
+
 
