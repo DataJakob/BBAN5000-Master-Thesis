@@ -7,13 +7,13 @@ from stable_baselines3.common.vec_env import DummyVecEnv
 
 from sklearn.model_selection import train_test_split
 
-from RL_Algorithm.ThesisEnvironment import PortfolioEnvironment as PorEnv
+from RL_Algorithm.ThesisEnvironment_copy import PortfolioEnvironment as PorEnv
 
 class RL_Model():
     """
     Doc string 
     """
-    def __init__(self, esg_data):
+    def __init__(self, esg_data, objective):
         self.stock_prices = pd.read_csv("../Data/StockPrices.csv")
         self.esg_data = esg_data
 
@@ -21,6 +21,7 @@ class RL_Model():
         self.test_data = None
 
         self.model = None
+        self.objective = objective
         
     
 
@@ -34,7 +35,7 @@ class RL_Model():
         self.train_data = stock_data_train
         self.test_data = stock_data_test
 
-        train_env = PorEnv(stock_data_train, self.esg_data, max_steps=100, window_size=20, esg_threshold=27)
+        train_env = PorEnv(stock_data_train, self.esg_data, max_steps=100, window_size=20, objective="Sortino")
         train_env = DummyVecEnv([lambda: train_env])
 
         # Initialize the SAC model
@@ -55,7 +56,7 @@ class RL_Model():
         )
 
         # Train, save and store
-        model.learn(total_timesteps=20000)
+        model.learn(total_timesteps=5000)
         model.save("RL/sac_portfolio_management")
         self.model = model
 
@@ -65,7 +66,7 @@ class RL_Model():
         """
         Doc string
         """
-        test_env = PorEnv(self.test_data, self.esg_data, max_steps=100, window_size=20, esg_threshold=27)
+        test_env = PorEnv(self.test_data, self.esg_data, max_steps=100, window_size=20, objective="Sortino")
         test_env = DummyVecEnv([lambda: test_env])
 
         # Initialize the testing environment
@@ -100,7 +101,7 @@ class RL_Model():
 
         # Convert the weights history to a DataFrame
         weights_df = pd.DataFrame(weights_history, columns=[f"Stock_{i+1}" for i in range(test_env.envs[0].num_stocks)])
-        weights_df.to_csv("../Data/RL_weights.csv", index=False)
+        weights_df.to_csv("../Data/RL_weights_"+self.objective+",.csv", index=False)
 
         print("--RL weights successfully stored--")
 
