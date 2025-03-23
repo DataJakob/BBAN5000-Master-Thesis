@@ -22,7 +22,7 @@ class PortfolioEnvironment(gym.Env):
         cash (float): Current cash value of the portfolio.
     """
 
-    def __init__(self, stock_data, esg_data, max_steps, window_size=10, objective=None):
+    def __init__(self, stock_data, esg_data, max_steps, window_size=30, objective=None):
         """
         Initializes the PortfolioEnvironment.
 
@@ -102,7 +102,11 @@ class PortfolioEnvironment(gym.Env):
             sharpe_ratio (float): Sharpe ratio.
         """
         excess_returns = returns - risk_free_rate
-        return np.mean(excess_returns) / np.std(excess_returns)
+        std_dev = np.std(excess_returns)
+        # Handle the case where standard deviation is zero
+        if std_dev == 0:
+            return 0.0  # Return a default value (e.g., 0) to avoid division by zero
+        return np.mean(excess_returns) / std_dev
     def _calculate_sortino_ratio(self, returns, risk_free_rate=0.0):
         """
         Calculates the Sortino ratio for the portfolio.

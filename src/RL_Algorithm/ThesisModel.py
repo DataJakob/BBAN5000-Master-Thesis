@@ -35,7 +35,7 @@ class RL_Model():
         self.train_data = stock_data_train
         self.test_data = stock_data_test
 
-        train_env = PorEnv(stock_data_train, self.esg_data, max_steps=100, window_size=20, objective="Sortino")
+        train_env = PorEnv(stock_data_train, self.esg_data, max_steps=100, window_size=30, objective=self.objective)
         train_env = DummyVecEnv([lambda: train_env])
 
         # Initialize the SAC model
@@ -44,11 +44,11 @@ class RL_Model():
             policy_kwargs=dict(net_arch=[64, 64]),  # Smaller network
             env=train_env,                # Environment
             verbose=1,              # Printing
-            learning_rate=3e-4,     # Learning rate
-            buffer_size=1000000,    # Memory usage
+            learning_rate=0.05,     # Learning rate
+            buffer_size=100000,    # Memory usage
             batch_size=64,         # Batch size for training  (higher= stable updates and exploitation, and vice versa)
             ent_coef='auto',        # Entropy coefficient (higher=more exploration, and vice versa)
-            gamma=0.99,             # Discount factor (time value of older rewards/observations)
+            gamma=0.95,             # Discount factor (time value of older rewards/observations)
             tau=0.005,              # Target network update rate
             train_freq=1,           # Train every step (higher=policy update frequency and exploitation, and vice versa)
             gradient_steps=1,  # Gradient steps per update
@@ -56,8 +56,8 @@ class RL_Model():
         )
 
         # Train, save and store
-        model.learn(total_timesteps=5000)
-        model.save("RL/sac_portfolio_management")
+        model.learn(total_timesteps=10000)
+        # model.save("RL/sac_portfolio_management")
         self.model = model
 
 
@@ -66,7 +66,7 @@ class RL_Model():
         """
         Doc string
         """
-        test_env = PorEnv(self.test_data, self.esg_data, max_steps=100, window_size=20, objective="Sortino")
+        test_env = PorEnv(self.test_data, self.esg_data, max_steps=100, window_size=30, objective=self.objective)
         test_env = DummyVecEnv([lambda: test_env])
 
         # Initialize the testing environment
@@ -101,7 +101,7 @@ class RL_Model():
 
         # Convert the weights history to a DataFrame
         weights_df = pd.DataFrame(weights_history, columns=[f"Stock_{i+1}" for i in range(test_env.envs[0].num_stocks)])
-        weights_df.to_csv("../Data/RL_weights_"+self.objective+",.csv", index=False)
+        weights_df.to_csv("../Data/RL_weights_"+self.objective+".csv", index=False)
 
         print("--RL weights successfully stored--")
 

@@ -30,7 +30,7 @@ class MencheroOGA():
             allocation and selection effects for each time step.
     """
 
-    def __init__(self, n_sectors, n_stocks_per_sector):
+    def __init__(self, experimental, n_sectors, n_stocks_per_sector):
         """
         Initializes the MencheroOGA class with portfolio returns, benchmark weights, and experimental weights.
 
@@ -40,7 +40,7 @@ class MencheroOGA():
             experimental_w (list): A nested list of experimental/portfolio weights corresponding to stocks over multiple time periods.
         """
         self.benchmark_w =  pd.read_csv("../Data/MPT_weights.csv")
-        self.experimental_w = pd.read_csv("../Data/RL_weights.csv")
+        self.experimental_w = experimental
         self.returns = pd.read_csv("../Data/StockReturns.csv")
 
         self.n_optimizations: int = self.benchmark_w.shape[0]
