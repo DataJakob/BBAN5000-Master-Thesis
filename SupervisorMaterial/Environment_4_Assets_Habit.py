@@ -135,7 +135,7 @@ class Env_4_Assets_Habit(Env):
         standard_normal_vector = np.random.normal(size = self.Num_Assets)
                       
         self.ret = self.cholesky_matrix @ standard_normal_vector 
-        
+
         self.ret = self.ret + self.return_mean
 
         self.wealth_in = self.wealth_out

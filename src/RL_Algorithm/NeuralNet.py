@@ -11,13 +11,18 @@ class CustomNeuralNet(BaseFeaturesExtractor):
         self.conv = nn.Sequential(
             nn.Conv1d(observation_space.shape[1], 32, kernel_size=6, padding=1),
             nn.ReLU(),
-            nn.maxPool1d(2),
+            nn.MaxPool1d(2),
         )
         self.lstm = nn.LSTM(32, 64, batch_first=True)
-        self.ff = nn.Sequential(
+        self.ff0 = nn.Sequential(
             nn.Linear(64, 128),
             nn.ReLU(),
             nn.Linear(128, features_dim)
+            )
+        self.ff1 = nn.Sequential(
+            nn.Linear(64, 256),
+            nn.ReLU(),
+            nn.Linear(256, features_dim)
             )
         
     def forward(self, observations):
@@ -26,7 +31,10 @@ class CustomNeuralNet(BaseFeaturesExtractor):
         x = x.permute(0,2,1)
         _, (h_n, _) = self.lstm(x)
         x = h_n.squeeze(0)
-        x = self.ff(x)
+        x0 = self.ff0(x)
+        x1 = self.ff1(x)
+        x = x0 + x1
+
         return x
     
 class CustomSACPolicy(SACPolicy):

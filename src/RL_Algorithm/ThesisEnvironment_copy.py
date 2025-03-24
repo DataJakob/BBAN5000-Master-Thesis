@@ -199,16 +199,13 @@ class PortfolioEnvironment(gym.Env):
         # Choose one reward function (e.g., Sharpe ratio) as the primary reward
         if self.objective == "Sharpe":
             reward = self._calculate_sharpe_ratio(np.array(self.portfolio_returns)) 
-            reward = self.penalised_reward(reward, esg_score)
         elif self.objective == "Sortino": 
             reward = self._calculate_sortino_ratio(np.array(self.portfolio_returns)) 
-            reward = self.penalised_reward(reward, esg_score)
         elif self.objective == "Sterling":
             reward = self._calculate_sterling_ratio(np.array(self.portfolio_returns)) 
-            reward = self.penalised_reward(reward, esg_score)
         else: 
             reward = self._calculate_portfolio_return(np.array(self.portfolio_returns))
-            reward = self.penalised_reward(reward, esg_score)
+        reward = self.penalised_reward(reward, esg_score)
 
         # Increment step
         self.current_step += 1
