@@ -2,17 +2,17 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from Menchero_OGA import MencheroOGA as MOGA
+from src.Result.Menchero_OGA import MencheroOGA as MOGA
 
 
 
 class GenerateResult():
 
     def __init__(self, path, n_sectors, n_stock_per_sector, n_optimizations, esg_data, sector_names):    
-        self.returns = pd.read_csv("../Data/StockReturns.csv")
-        self.bench_w = pd.read_csv("../Data/MPT_weights.csv")
+        self.returns = pd.read_csv("Data/StockReturns.csv")
+        self.bench_w = pd.read_csv("Data/MPT_weights.csv")
         self.path = path
-        self.exper_w = pd.read_csv("../Data/RL_weights_"+self.path+".csv")
+        self.exper_w = pd.read_csv("Data/RL_weights_"+self.path+".csv")
         self.esg_data = esg_data
 
         self.n_sectors = n_sectors
@@ -80,7 +80,7 @@ class GenerateResult():
 
         plt.suptitle("Complete Proto Plot for "+algo_name+" Algo", fontsize=12)
         bigfig.tight_layout(pad=2.0)
-        bigfig.savefig("../Results/"+algo_name+".PNG", dpi=300, bbox_inches="tight")
+        bigfig.savefig("Results/"+algo_name+".PNG", dpi=300, bbox_inches="tight")
         plt.close()
 
 

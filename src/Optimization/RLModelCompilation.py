@@ -8,16 +8,16 @@ from torch.optim import Adam
 
 from sklearn.model_selection import train_test_split
 
-from RL_Algorithm.ThesisEnvironment_copy import PortfolioEnvironment as PorEnv
-from RL_Algorithm.NeuralNet import CustomNeuralNet as CusNN
-from RL_Algorithm.NeuralNet import CustomSACPolicy as CSACP
+from src.Optimization.Environment import PortfolioEnvironment as PorEnv
+from src.Optimization.NeuralNet import CustomNeuralNet as CusNN
+from src.Optimization.NeuralNet import CustomSACPolicy as CSACP
 
 class RL_Model():
     """
     Doc string 
     """
     def __init__(self, esg_data, objective, window_size, total_timesteps, esg_compliancy: bool):
-        self.stock_prices = pd.read_csv("../Data/StockPrices.csv")
+        self.stock_prices = pd.read_csv("src/Data/StockPrices.csv")
         # self.stock_prices = self.stock_prices.iloc[1:]
         self.esg_data = esg_data
 
@@ -123,7 +123,7 @@ class RL_Model():
 
         # Convert the weights history to a DataFrame
         weights_df = pd.DataFrame(weights_history, columns=[f"Stock_{i+1}" for i in range(test_env.envs[0].num_stocks)])
-        weights_df.to_csv("../Data/RL_weights_"+self.objective+"_esg_"+str(self.esg_compliancy)+".csv", 
+        weights_df.to_csv("Data/RL_weights_"+self.objective+"_esg_"+str(self.esg_compliancy)+".csv", 
                           index=False)
         
 
