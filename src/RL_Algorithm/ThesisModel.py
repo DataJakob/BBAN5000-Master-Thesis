@@ -35,18 +35,18 @@ class RL_Model():
         self.train_data = stock_data_train
         self.test_data = stock_data_test
 
-        train_env = PorEnv(stock_data_train, self.esg_data, max_steps=100, window_size=30, objective=self.objective)
+        train_env = PorEnv(stock_data_train, self.esg_data, max_steps=stock_data_train.shape[0], window_size=15, objective=self.objective)
         train_env = DummyVecEnv([lambda: train_env])
 
         # Initialize the SAC model
         model = SAC(
             policy="MlpPolicy",     # Policy type
-            policy_kwargs=dict(net_arch=[64, 64]),  # Smaller network
+            policy_kwargs=dict(net_arch=[256, 256]),  # Larger network
             env=train_env,                # Environment
             verbose=1,              # Printing
-            learning_rate=0.05,     # Learning rate
-            buffer_size=100000,    # Memory usage
-            batch_size=64,         # Batch size for training  (higher= stable updates and exploitation, and vice versa)
+            learning_rate=0.001,     # Learning rate
+            buffer_size=50000,    # Memory usage
+            batch_size=128,         # Batch size for training  (higher= stable updates and exploitation, and vice versa)
             ent_coef='auto',        # Entropy coefficient (higher=more exploration, and vice versa)
             gamma=0.95,             # Discount factor (time value of older rewards/observations)
             tau=0.005,              # Target network update rate
@@ -56,7 +56,7 @@ class RL_Model():
         )
 
         # Train, save and store
-        model.learn(total_timesteps=10000)
+        model.learn(total_timesteps=7000)
         # model.save("RL/sac_portfolio_management")
         self.model = model
 
@@ -66,7 +66,7 @@ class RL_Model():
         """
         Doc string
         """
-        test_env = PorEnv(self.test_data, self.esg_data, max_steps=100, window_size=30, objective=self.objective)
+        test_env = PorEnv(self.test_data, self.esg_data, max_steps=self.test_data.shape[0], window_size=15, objective=self.objective)
         test_env = DummyVecEnv([lambda: test_env])
 
         # Initialize the testing environment

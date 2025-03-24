@@ -50,9 +50,6 @@ class GenerateResult():
         pap = [np.prod(pa[i]+1) for i in range(len(pa))]
         psp = [np.prod(ps[i]+1) for i in range(len(ps))]
 
-        print(f"Active Return: {ar}")
-
-
         bigfig, ax = plt.subplots(3,2,figsize=(10,10))
         ax[0,0].plot(br, color="grey", label="Benchmark")
         ax[0,0].plot(er, color="blue", label="Experimental")
@@ -64,8 +61,8 @@ class GenerateResult():
 
         ax[0,1].plot(er, color="blue", label="Experimental")
         ax[0,1].scatter(x=np.linspace(0,self.n_optimizations-1,self.n_optimizations), y =(br*ar), s=5, color="black")
-        ax[0,1].plot((br*ar)+(0.001*(br*ar)), 
-                    color="grey", linestyle="--", label="Validity control")
+        # ax[0,1].plot((br*ar)+(0.001*(br*ar)), 
+        #             color="grey", linestyle="--", label="Validity control")
         ax[0,1].set_ylabel("Return")
         ax[0,1].set_xlabel("Trading times")
         ax[0,1].set_title('Benchmark * Active return')
