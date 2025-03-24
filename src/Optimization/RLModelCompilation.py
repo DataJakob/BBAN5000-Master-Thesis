@@ -8,16 +8,16 @@ from torch.optim import Adam
 
 from sklearn.model_selection import train_test_split
 
-from RL_Algorithm.ThesisEnvironment_copy import PortfolioEnvironment as PorEnv
-from RL_Algorithm.NeuralNet import CustomNeuralNet as CusNN
-from RL_Algorithm.NeuralNet import CustomSACPolicy as CSACP
+from src.Optimization.Environment import PortfolioEnvironment as PorEnv
+from src.Optimization.NeuralNet import CustomNeuralNet as CusNN
+from src.Optimization.NeuralNet import CustomSACPolicy as CSACP
 
 class RL_Model():
     """
     Doc string 
     """
-    def __init__(self, esg_data, objective, window_size, total_timesteps):
-        self.stock_prices = pd.read_csv("../Data/StockPrices.csv")
+    def __init__(self, esg_data, objective, window_size, total_timesteps, esg_compliancy: bool):
+        self.stock_prices = pd.read_csv("src/Data/StockPrices.csv")
         # self.stock_prices = self.stock_prices.iloc[1:]
         self.esg_data = esg_data
 
@@ -28,6 +28,7 @@ class RL_Model():
         self.objective = objective
         self.window_size = window_size
         self.total_timesteps = total_timesteps
+        self.esg_compliancy = esg_compliancy
         
     
 
@@ -41,20 +42,26 @@ class RL_Model():
         self.train_data = stock_data_train
         self.test_data = stock_data_test
 
-        train_env = PorEnv(stock_data_train, self.esg_data, max_steps=stock_data_train.shape[0], window_size=self.window_size, objective=self.objective)
+        train_env = PorEnv(stock_data_train, 
+                           self.esg_data, 
+                           max_steps=stock_data_train.shape[0], 
+                           window_size=self.window_size, 
+                           objective=self.objective,
+                           esg_compliancy = self.esg_compliancy)
         train_env = DummyVecEnv([lambda: train_env])
 
         # Initialize the SAC model
         model = SAC(
-            policy=CSACP,
-            policy_kwargs={
-                "features_extractor_kwargs": {"features_dim": 256},
-                "optimizer_class": Adam,
-                # "optimizer_kwargs": {"eps": 1e-5},
-            },
+            # policy=CSACP,
+            # policy_kwargs={
+            #     "features_extractor_kwargs": {"features_dim": 256},
+            #     "optimizer_class": Adam,
+            # },
+            policy="MlpPolicy",
+            policy_kwargs=dict(net_arch=[256, 256]),  # Larger network
             env=train_env,
             verbose=1,              # Printing
-            # learning_rate=0.001,     # Learning rate
+            learning_rate=0.001,     # Learning rate
             buffer_size=50000,    # Memory usage
             batch_size=128,         # Batch size for training  (higher= stable updates and exploitation, and vice versa)
             ent_coef='auto',        # Entropy coefficient (higher=more exploration, and vice versa)
@@ -76,7 +83,12 @@ class RL_Model():
         """
         Doc string
         """
-        test_env = PorEnv(self.test_data, self.esg_data, max_steps=self.test_data.shape[0], window_size=self.window_size, objective=self.objective)
+        test_env = PorEnv(self.test_data, 
+                          self.esg_data, 
+                          max_steps=self.test_data.shape[0],
+                          window_size=self.window_size, 
+                          objective=self.objective,
+                          esg_compliancy = self.esg_compliancy)
         test_env = DummyVecEnv([lambda: test_env])
 
         # Initialize the testing environment
@@ -111,6 +123,8 @@ class RL_Model():
 
         # Convert the weights history to a DataFrame
         weights_df = pd.DataFrame(weights_history, columns=[f"Stock_{i+1}" for i in range(test_env.envs[0].num_stocks)])
-        weights_df.to_csv("../Data/RL_weights_"+self.objective+".csv", index=False)
+        weights_df.to_csv("Data/RL_weights_"+self.objective+"_esg_"+str(self.esg_compliancy)+".csv", 
+                          index=False)
+        
 
         print("--RL weights successfully stored--")

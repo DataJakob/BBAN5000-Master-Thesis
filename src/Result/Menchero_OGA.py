@@ -39,9 +39,9 @@ class MencheroOGA():
             benchmark_w (list): A nested list of benchmark weights corresponding to stocks over multiple time periods.
             experimental_w (list): A nested list of experimental/portfolio weights corresponding to stocks over multiple time periods.
         """
-        self.benchmark_w =  pd.read_csv("../Data/MPT_weights.csv")
+        self.benchmark_w =  pd.read_csv("Data/MPT_weights.csv")
         self.experimental_w = experimental
-        self.returns = pd.read_csv("../Data/StockReturns.csv")
+        self.returns = pd.read_csv("Data/StockReturns.csv")
 
         self.n_optimizations: int = self.benchmark_w.shape[0]
         
@@ -125,4 +125,4 @@ class MencheroOGA():
         
         self.allocation_effects = np.concatenate(allocation_list)
         self.selection_effects = np.concatenate(selection_list)
-        print("--Frequency analysis performed succesfully--")
+        # print("--Frequency analysis performed succesfully--")

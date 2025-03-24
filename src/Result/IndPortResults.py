@@ -2,19 +2,17 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from Menchero_OGA import MencheroOGA as MOGA
+from src.Result.Menchero_OGA import MencheroOGA as MOGA
 
 
 
 class GenerateResult():
 
-    def __init__(self, n_sectors, n_stock_per_sector, n_optimizations, esg_data, sector_names):    
-        self.returns = pd.read_csv("../Data/StockReturns.csv")
-        self.bench_w = pd.read_csv("../Data/MPT_weights.csv")
-        self.return_w = pd.read_csv("../Data/RL_weights_Return.csv")
-        self.sharpe_w = pd.read_csv("../Data/RL_weights_Sharpe.csv")
-        self.sortino_w = pd.read_csv("../Data/RL_weights_Sortino.csv")
-        self.sterling_w = pd.read_csv("../Data/RL_weights_Sterling.csv")
+    def __init__(self, path, n_sectors, n_stock_per_sector, n_optimizations, esg_data, sector_names):    
+        self.returns = pd.read_csv("Data/StockReturns.csv")
+        self.bench_w = pd.read_csv("Data/MPT_weights.csv")
+        self.path = path
+        self.exper_w = pd.read_csv("Data/RL_weights_"+self.path+".csv")
         self.esg_data = esg_data
 
         self.n_sectors = n_sectors
@@ -22,10 +20,8 @@ class GenerateResult():
         self.n_optimizations = n_optimizations
         self.sector_names = sector_names
 
-        self.return_analysis: dict = None
-        self.sharpe_analysis: dict = None
-        self.sortino_analysis: dict = None
-        self.sterling_analysis: dict = None
+        self.exper_analysis: dict = None
+
     
     def store_values(self,i,pa,ps,ar,er,br,esg):
         mydict = {"sector_allocation":pa,
@@ -35,15 +31,7 @@ class GenerateResult():
                 "bench_return":br,
                 "esg_score":esg,
                 }
-        if i==0:
-            self.return_analysis = mydict
-        elif i==1:
-            self.sharpe_analysis = mydict
-        elif i==2:
-            self.sortino_analysis = mydict
-        else:
-            self.sterling_analysis = mydict
-
+        self.exper_analysis = mydict
 
 
     def plot_values(self,algo_name, pa, ps, ar, er,br,esg):
@@ -92,15 +80,15 @@ class GenerateResult():
 
         plt.suptitle("Complete Proto Plot for "+algo_name+" Algo", fontsize=12)
         bigfig.tight_layout(pad=2.0)
-        bigfig.savefig("../Results/"+algo_name+".PNG", dpi=300, bbox_inches="tight")
+        bigfig.savefig("Results/"+algo_name+".PNG", dpi=300, bbox_inches="tight")
         plt.close()
 
 
 
 
     def friple_frequency_analysis(self):
-        objective_df = [self.return_w, self.sharpe_w, self.sortino_w, self.sterling_w]
-        objective_storage = ["return_analysis", "sharpe_analysis", "sortino_analysis", "sterling_analysis"]
+        objective_df = [self.exper_w]
+        objective_storage = [self.path]
 
         bench_w = [self.bench_w.iloc[-self.n_optimizations+time] for time in range(self.n_optimizations)]
         returns = np.array([self.returns.iloc[-self.n_optimizations+time] for time in range(self.n_optimizations)])+1
