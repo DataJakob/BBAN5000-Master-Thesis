@@ -22,7 +22,7 @@ class PortfolioEnvironment(gym.Env):
         cash (float): Current cash value of the portfolio.
     """
 
-    def __init__(self, stock_data:list, esg_data: list, max_steps: int, window_size: int, objective: str):
+    def __init__(self, stock_data:list, esg_data: list, max_steps: int, window_size: int, objective: str, esg_compliancy: bool):
         """
         Initializes the PortfolioEnvironment.
 
@@ -48,6 +48,7 @@ class PortfolioEnvironment(gym.Env):
         self.portfolio_returns = []  # Store portfolio returns for reward calculations
         
         self.objective = objective
+        self.esg_compliancy = esg_compliancy
 
 
     def reset(self, seed=42):
@@ -205,7 +206,9 @@ class PortfolioEnvironment(gym.Env):
             reward = self._calculate_sterling_ratio(np.array(self.portfolio_returns)) 
         else: 
             reward = self._calculate_portfolio_return(np.array(self.portfolio_returns))
-        reward = self.penalised_reward(reward, esg_score)
+        
+        if self.esg_compliancy == True:
+            reward = self.penalised_reward(reward, esg_score)
 
         # Increment step
         self.current_step += 1
