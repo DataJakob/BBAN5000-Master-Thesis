@@ -38,7 +38,7 @@ Now, the "MyVenv" should work as a kernel. Before running a jupyter notebook, ch
 <p>
   ✅ Data Retrival
   <br>
-  ❌ Exploratory Data  Analysis 
+  ✅ Exploratory Data  Analysis 
   <br>
   ✅ Markowitz Portfolio Theory 
   <br>
@@ -46,5 +46,5 @@ Now, the "MyVenv" should work as a kernel. Before running a jupyter notebook, ch
   <br>
   ✅ OGA model 
   <br>
-  ❌ Result analysis 
+  ✅ Result analysis 
 </p>
