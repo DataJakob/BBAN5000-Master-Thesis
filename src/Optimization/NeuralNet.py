@@ -45,4 +45,3 @@ class CustomSACPolicy(SACPolicy):
         
     def _build_mlp_extractor(self) -> None:
         self.mlp_exctractor = None
-    

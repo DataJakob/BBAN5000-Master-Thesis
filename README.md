@@ -32,6 +32,11 @@ Install requirements:
 pip install -r requirements.txt
 ```
 
+Run main file:
+```bash
+python main.py
+```
+
 Now, the "MyVenv" should work as a kernel. Before running a jupyter notebook, change kernel into MyVenv.
 
 <h2> Component To-Do-List</h2>

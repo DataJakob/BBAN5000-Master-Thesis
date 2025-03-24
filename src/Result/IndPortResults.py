@@ -122,4 +122,3 @@ class GenerateResult():
                              exper_returns, bench_returns,
                              average_esg)
         print("----Analysis completed succesfully----")
-
