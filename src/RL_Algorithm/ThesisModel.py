@@ -4,10 +4,13 @@ import numpy as np
 from stable_baselines3 import SAC
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env import DummyVecEnv
+from torch.optim import Adam
 
 from sklearn.model_selection import train_test_split
 
 from RL_Algorithm.ThesisEnvironment_copy import PortfolioEnvironment as PorEnv
+from RL_Algorithm.NeuralNet import CustomNeuralNet as CusNN
+from RL_Algorithm.NeuralNet import CustomSACPolicy as CSACP
 
 class RL_Model():
     """
@@ -15,6 +18,7 @@ class RL_Model():
     """
     def __init__(self, esg_data, objective, window_size, total_timesteps):
         self.stock_prices = pd.read_csv("../Data/StockPrices.csv")
+        # self.stock_prices = self.stock_prices.iloc[1:]
         self.esg_data = esg_data
 
         self.train_data = None
@@ -42,11 +46,15 @@ class RL_Model():
 
         # Initialize the SAC model
         model = SAC(
-            policy="MlpPolicy",     # Policy type
-            policy_kwargs=dict(net_arch=[256, 256]),  # Larger network
-            env=train_env,                # Environment
+            policy=CSACP,
+            policy_kwargs={
+                "features_extractor_kwargs": {"features_dim": 256},
+                "optimizer_class": Adam,
+                # "optimizer_kwargs": {"eps": 1e-5},
+            },
+            env=train_env,
             verbose=1,              # Printing
-            learning_rate=0.001,     # Learning rate
+            # learning_rate=0.001,     # Learning rate
             buffer_size=50000,    # Memory usage
             batch_size=128,         # Batch size for training  (higher= stable updates and exploitation, and vice versa)
             ent_coef='auto',        # Entropy coefficient (higher=more exploration, and vice versa)
@@ -106,10 +114,3 @@ class RL_Model():
         weights_df.to_csv("../Data/RL_weights_"+self.objective+".csv", index=False)
 
         print("--RL weights successfully stored--")
-
-
-
-
-
-
-

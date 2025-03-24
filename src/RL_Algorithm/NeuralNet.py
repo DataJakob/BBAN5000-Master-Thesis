@@ -11,11 +11,16 @@ class CustomNeuralNet(BaseFeaturesExtractor):
         self.conv = nn.Sequential(
             nn.Conv1d(observation_space.shape[1], 32, kernel_size=6, padding=1),
             nn.ReLU(),
-            nn.maxPool1d(2),
+            nn.MaxPool1d(2),
         )
         self.lstm = nn.LSTM(32, 64, batch_first=True)
-        self.ff = nn.Sequential(
+        self.ff0 = nn.Sequential(
             nn.Linear(64, 128),
+            nn.ReLU(),
+            nn.Linear(128, features_dim)
+            )
+        self.ff1 = nn.Sequential(
+            nn.Linear(128, 256),
             nn.ReLU(),
             nn.Linear(128, features_dim)
             )
