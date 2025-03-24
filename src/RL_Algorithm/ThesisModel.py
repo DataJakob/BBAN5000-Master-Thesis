@@ -13,7 +13,7 @@ class RL_Model():
     """
     Doc string 
     """
-    def __init__(self, esg_data, objective):
+    def __init__(self, esg_data, objective, window_size, total_timesteps):
         self.stock_prices = pd.read_csv("../Data/StockPrices.csv")
         self.esg_data = esg_data
 
@@ -22,6 +22,8 @@ class RL_Model():
 
         self.model = None
         self.objective = objective
+        self.window_size = window_size
+        self.total_timesteps = total_timesteps
         
     
 
@@ -35,7 +37,7 @@ class RL_Model():
         self.train_data = stock_data_train
         self.test_data = stock_data_test
 
-        train_env = PorEnv(stock_data_train, self.esg_data, max_steps=stock_data_train.shape[0], window_size=15, objective=self.objective)
+        train_env = PorEnv(stock_data_train, self.esg_data, max_steps=stock_data_train.shape[0], window_size=self.window_size, objective=self.objective)
         train_env = DummyVecEnv([lambda: train_env])
 
         # Initialize the SAC model
@@ -56,7 +58,7 @@ class RL_Model():
         )
 
         # Train, save and store
-        model.learn(total_timesteps=7000)
+        model.learn(total_timesteps=self.total_timesteps)
         # model.save("RL/sac_portfolio_management")
         self.model = model
 
@@ -66,7 +68,7 @@ class RL_Model():
         """
         Doc string
         """
-        test_env = PorEnv(self.test_data, self.esg_data, max_steps=self.test_data.shape[0], window_size=15, objective=self.objective)
+        test_env = PorEnv(self.test_data, self.esg_data, max_steps=self.test_data.shape[0], window_size=self.window_size, objective=self.objective)
         test_env = DummyVecEnv([lambda: test_env])
 
         # Initialize the testing environment
