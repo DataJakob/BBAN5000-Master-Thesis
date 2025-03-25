@@ -42,25 +42,34 @@ class GenerateResult():
         ax[0,0].plot(br, color="grey", label="Benchmark")
         ax[0,0].plot(er, color="blue", label="Experimental")
         ax[0,0].plot(ar, color="green", label= "Geometric active return")
+        ax[0,0].scatter(x=np.linspace(0,self.n_optimizations-1,self.n_optimizations), y =(br*ar), 
+                s=5, color="black", label="Validity Control")
         ax[0,0].set_ylabel("Return")
         ax[0,0].set_xlabel("Trading times")
         ax[0,0].set_title('General Portfolio Performance')
         ax[0,0].legend()
 
-        ax[0,1].plot(er, color="blue", label="Experimental")
-        ax[0,1].scatter(x=np.linspace(0,self.n_optimizations-1,self.n_optimizations), y =(br*ar), 
-                        s=5, color="black", label="Validity Control")
-        ax[0,1].set_ylabel("Return")
-        ax[0,1].set_xlabel("Trading times")
-        ax[0,1].set_title('Benchmark * Active return')
-        ax[0,1].legend()
+        # ax[0,1].plot(er, color="blue", label="Experimental")
+        # ax[0,1].scatter(x=np.linspace(0,self.n_optimizations-1,self.n_optimizations), y =(br*ar), 
+        #                 s=5, color="black", label="Validity Control")
+        # ax[0,1].set_ylabel("Return")
+        # ax[0,1].set_xlabel("Trading times")
+        # ax[0,1].set_title('Benchmark * Active return')
+        # ax[0,1].legend()
 
         data_arrays = [pap, psp]
         data_labels = ["Allocation", "Selection"]
-        ax[1,0].boxplot(data_arrays, tick_labels=data_labels)
-        ax[1,0].axhline(y=1, color="black")
-        ax[1,0].set_ylabel("Return")
-        ax[1,0].set_title('Attribution Variation')
+        ax[0,1].boxplot(data_arrays, tick_labels=data_labels)
+        ax[0,1].axhline(y=1, color="black")
+        ax[0,1].set_ylabel("Return")
+        ax[0,1].set_title('Attribution Effect Variation')
+
+        ax[1,0].scatter(x=esg, y=er,
+                        s= 12,
+                        color="black")
+        ax[1,0].set_xlabel("Average ESG score")
+        ax[1,0].set_ylabel("Portfolio Return")
+        ax[1,0].set_title("Correlation: ESG x Return")
 
         ax[1,1].plot(esg, color="blue", label="Mean ESG score")
         ax[1,1].set_ylabel("ESG score")

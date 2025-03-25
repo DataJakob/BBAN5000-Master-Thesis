@@ -2,6 +2,9 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+from scipy.stats import pearsonr
+
+
 
 
 class ResultConveyor():
@@ -56,8 +59,8 @@ class ResultConveyor():
     def financial_table(self):
         returns = [self.analysis_list[0].exper_analysis["bench_return"]] + [self.analysis_list[i].exper_analysis["active_return"] for i in range(8)]
         txt = ["Benchmark","Ret_ESG","Sha_ESG","Sor_ESG", "Ste_ESG", "Ret", "Sha", "Sor", "Ste"]
-        metrics = ["P/L", "Sharpe", "Sortino", "Sterling"]
         financial_df = pd.DataFrame()
+        financial_df["Measurement"] = ["P/L", "Sharpe", "Sortino", "Sterling"]
 
         def _calculate_PL(returns):
             """Calculate P/L"""
@@ -103,12 +106,13 @@ class ResultConveyor():
                                         _calculate_sharpe(returns[i], 0.0),
                                         _calculate_sortino(returns[i], 0.0),
                                         _calculate_sterling(returns[i])]
-        financial_df.to_csv("Results/financial_table.csv")
+        financial_df.to_csv("Results/financial_table.csv", index=False)
 
 
     def actvie_return_table(self):
         txt = ["Ret_ESG","Sha_ESG","Sor_ESG", "Ste_ESG", "Ret", "Sha", "Sor", "Ste"]
         active_df = pd.DataFrame()
+        active_df["Measurment"] = ["Active return", "mu(all)", "sig(all)", "mu(sel)", "sig(sel)"]
 
         counter= 0
         for item in self.analysis_list:
@@ -121,7 +125,23 @@ class ResultConveyor():
                                             all_mean, all_std,
                                             sel_mean, sel_std]
             counter+=1
-        active_df.to_csv("Results/active_df.csv")
+        active_df.to_csv("Results/active_df.csv", index=False)
+
+
+    def esg_table(self):
+        txt = ["Ret_ESG","Sha_ESG","Sor_ESG", "Ste_ESG", "Ret", "Sha", "Sor", "Ste"]
+        esg_df = pd.DataFrame()
+        esg_df["Measurment"] = ["Avg ESG", "Pearsons R", "p value"]
+        
+        counter = 0
+        for item in self.analysis_list:
+            esg_scores = item.exper_analysis["esg_score"]
+            avg_esg = np.mean(esg_scores)
+            correlation, p_value = pearsonr(avg_esg, item.exper_analysis["return"])
+            counter += 1
+
+            esg_df[txt[counter]] = [avg_esg, correlation, p_value]
+        esg_df.to_csv("Results/active_df.csv", index=False)
 
 
 
@@ -129,3 +149,4 @@ class ResultConveyor():
         self.overview_plot()
         self.financial_table()
         self.actvie_return_table()
+        self.esg_table()
