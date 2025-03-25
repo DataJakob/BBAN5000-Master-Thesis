@@ -17,7 +17,7 @@ from src.Result.OverviewResults import ResultConveyor as RC
 
 """------------------------------------------------"""
 # Define necessary non-fixed variables
-trading_n = 50
+trading_n = 500
 history_usage = 100
 n_sectors = 6
 n_stocks_per_sector = 4
@@ -49,25 +49,25 @@ esg_scores = [36.6, 35.3, 17.9, 18,
 # data.retrieve_data()
 # """------------------------------------------------"""
 # Generate benchmark weights thorugh MPT using Sharpe ratio
-benchmark = MPT(history_usage, trading_n)
+# benchmark = MPT(history_usage, trading_n)
 # IMPORTANT: In order to see  the effect of the weights, algo exclude last observation from optimization
-benchmark.frequency_optimizing()
+# benchmark.frequency_optimizing()
 # """------------------------------------------------"""
-# objectives = ["Return", "Sharpe", "Sortino", "Sterling", "Return", "Sharpe", "Sortino", "Sterling"]
-# esg_compliancy = [True, True, True, True, False, False, False, False]
+objectives = ["Return", "Sharpe", "Sortino", "Sterling", "Return", "Sharpe", "Sortino", "Sterling"]
+esg_compliancy = [True, True, True, True, False, False, False, False]
 # objectives = ["Sortino", "Sterling"]
 # esg_compliancy = [False, False]
 
 
-# for i in range(len(objectives)):
-#     reinforcement = RLM(esg_scores, 
-#                         objective=objectives[i],
-#                         window_size=history_usage_RL,
-#                         total_timesteps=500,
-#                         esg_compliancy=esg_compliancy[i],
-#                         )
-#     reinforcement.train_model()
-#     reinforcement.test_model()
+for i in range(len(objectives)):
+    reinforcement = RLM(esg_scores, 
+                        objective=objectives[i],
+                        window_size=history_usage_RL,
+                        total_timesteps=2000,
+                        esg_compliancy=esg_compliancy[i],
+                        )
+    reinforcement.train_model()
+    reinforcement.test_model()
 # """------------------------------------------------"""
 paths = ["Return_esg_True", "Sharpe_esg_True",
          "Sortino_esg_True","Sterling_esg_True",
