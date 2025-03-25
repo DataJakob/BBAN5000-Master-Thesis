@@ -21,7 +21,7 @@ class ResultConveyor():
         act_port = []
 
         for item in self.analysis_list:
-            sel_eff = np.std([np.prod(item.exper_analysis["sector_allocation"][i]+1) for i in range(self.n_optimizations)]) - np.mean(item.exper_analysis["sector_allocation"]-1) 
+            sel_eff = np.std([np.prod(item.exper_analysis["sector_selection"][i]+1) for i in range(self.n_optimizations)]) - np.mean(item.exper_analysis["sector_allocation"]-1) 
             all_eff = np.std([np.prod(item.exper_analysis["sector_allocation"][i]+1) for i in range(self.n_optimizations)]) - np.mean(item.exper_analysis["sector_allocation"]-1)
             act_ret = item.exper_analysis["active_return"][-1]
             sel_port.append(sel_eff)
