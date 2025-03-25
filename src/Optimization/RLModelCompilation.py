@@ -17,7 +17,7 @@ class RL_Model():
     Doc string 
     """
     def __init__(self, esg_data, objective, window_size, total_timesteps, esg_compliancy: bool):
-        self.stock_prices = pd.read_csv("src/Data/StockPrices.csv")
+        self.stock_prices = pd.read_csv("Data/StockPrices.csv")
         # self.stock_prices = self.stock_prices.iloc[1:]
         self.esg_data = esg_data
 

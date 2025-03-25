@@ -19,6 +19,7 @@ class GenerateResult():
         self.n_stock = n_stock_per_sector
         self.n_optimizations = n_optimizations
         self.sector_names = sector_names
+        
 
         self.exper_analysis: dict = None
 
@@ -56,7 +57,7 @@ class GenerateResult():
         # ax[0,1].set_xlabel("Trading times")
         # ax[0,1].set_title('Benchmark * Active return')
         # ax[0,1].legend()
-
+    
         data_arrays = [pap, psp]
         data_labels = ["Allocation", "Selection"]
         ax[0,1].boxplot(data_arrays, tick_labels=data_labels)
