@@ -67,11 +67,11 @@ class MencheroOGA():
                   - all_opt (numpy.ndarray): Optimized allocation effects for all sectors at time t.
         """
         # Returns and weights on sector level for  benchmark
-        w_b = np.array([sum(wb[int(i*self.n_stocks):int((i+1)*self.n_stocks)]) for i in range(self.n_sectors)])
+        w_b = np.array([sum(wb[int(i*self.n_stocks):int((i+1)*self.n_stocks)]) for i in range(self.n_sectors)])+1e-9
         r_b = np.array([wb[int(i*self.n_stocks):int((i+1)*self.n_stocks)] @ ret[int(i*self.n_stocks):int((i+1)*self.n_stocks)] for i in range(self.n_sectors)])/w_b
 
         # Returns and weights on sector level for portfolio
-        w_e = np.array([sum(we[int(i*self.n_stocks):int((i+1)*self.n_stocks)]) for i in range(self.n_sectors)])
+        w_e = np.array([sum(we[int(i*self.n_stocks):int((i+1)*self.n_stocks)]) for i in range(self.n_sectors)])+1e-9
         r_e = np.array([we[int(i*self.n_stocks):int((i+1)*self.n_stocks)] @ ret[int(i*self.n_stocks):int((i+1)*self.n_stocks)] for i in range(self.n_sectors)])/w_e
 
         # Total portfolio and benchmark return

@@ -23,7 +23,7 @@ n_sectors = 6
 n_stocks_per_sector = 4
 
 # For RL algorithm
-history_usage_RL = 30
+history_usage_RL = 50
 """------------------------------------------------"""
 # Defining stock pool
 ticker_df =  pd.DataFrame()
@@ -63,7 +63,7 @@ for i in range(len(objectives)):
     reinforcement = RLM(esg_scores, 
                         objective=objectives[i],
                         window_size=history_usage_RL,
-                        total_timesteps=2000,
+                        total_timesteps=10000,
                         esg_compliancy=esg_compliancy[i],
                         )
     reinforcement.train_model()
