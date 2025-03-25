@@ -137,11 +137,11 @@ class ResultConveyor():
         for item in self.analysis_list:
             esg_scores = item.exper_analysis["esg_score"]
             avg_esg = np.mean(esg_scores)
-            correlation, p_value = pearsonr(avg_esg, item.exper_analysis["return"])
+            correlation, p_value = pearsonr(esg_scores, item.exper_analysis["return"])
+            esg_df[txt[counter]] = [avg_esg, correlation, p_value]
             counter += 1
 
-            esg_df[txt[counter]] = [avg_esg, correlation, p_value]
-        esg_df.to_csv("Results/active_df.csv", index=False)
+        esg_df.to_csv("Results/esg_table.csv", index=False)
 
 
 
