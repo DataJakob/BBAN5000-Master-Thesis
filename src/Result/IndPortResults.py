@@ -99,7 +99,7 @@ class GenerateResult():
     def friple_frequency_analysis(self):
         objective_df = [self.exper_w]
         objective_storage = [self.path]
-
+        print(-self.n_optimizations)
         bench_w = [self.bench_w.iloc[-self.n_optimizations+time] for time in range(self.n_optimizations)]
         returns = np.array([self.returns.iloc[-self.n_optimizations+time] for time in range(self.n_optimizations)])+1
 

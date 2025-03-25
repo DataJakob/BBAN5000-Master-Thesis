@@ -17,13 +17,13 @@ from src.Result.OverviewResults import ResultConveyor as RC
 
 """------------------------------------------------"""
 # Define necessary non-fixed variables
-trading_n = 30
+trading_n = 50
 history_usage = 100
 n_sectors = 6
 n_stocks_per_sector = 4
 
 # For RL algorithm
-history_usage_RL = 10
+history_usage_RL = 30
 """------------------------------------------------"""
 # Defining stock pool
 ticker_df =  pd.DataFrame()
@@ -48,10 +48,10 @@ esg_scores = [36.6, 35.3, 17.9, 18,
 # # In function below, set log=True to check for data availability
 # data.retrieve_data()
 # """------------------------------------------------"""
-# # Generate benchmark weights thorugh MPT using Sharpe ratio
-# benchmark = MPT(history_usage, trading_n)
-# # IMPORTANT: In order to see  the effect of the weights, algo exclude last observation from optimization
-# benchmark.frequency_optimizing()
+# Generate benchmark weights thorugh MPT using Sharpe ratio
+benchmark = MPT(history_usage, trading_n)
+# IMPORTANT: In order to see  the effect of the weights, algo exclude last observation from optimization
+benchmark.frequency_optimizing()
 # """------------------------------------------------"""
 # objectives = ["Return", "Sharpe", "Sortino", "Sterling", "Return", "Sharpe", "Sortino", "Sterling"]
 # esg_compliancy = [True, True, True, True, False, False, False, False]
@@ -63,12 +63,12 @@ esg_scores = [36.6, 35.3, 17.9, 18,
 #     reinforcement = RLM(esg_scores, 
 #                         objective=objectives[i],
 #                         window_size=history_usage_RL,
-#                         total_timesteps=20000,
+#                         total_timesteps=500,
 #                         esg_compliancy=esg_compliancy[i],
 #                         )
 #     reinforcement.train_model()
 #     reinforcement.test_model()
-"""------------------------------------------------"""
+# """------------------------------------------------"""
 paths = ["Return_esg_True", "Sharpe_esg_True",
          "Sortino_esg_True","Sterling_esg_True",
          "Return_esg_False", "Sharpe_esg_False",
