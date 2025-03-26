@@ -17,7 +17,8 @@ class GenerateResult():
 
         self.n_sectors = n_sectors
         self.n_stock = n_stock_per_sector
-        self.n_optimizations = n_optimizations
+        # All optimizations weights are to be multiplied with returns for time t+1
+        self.n_optimizations = n_optimizations - 1
         self.sector_names = sector_names
         
 
@@ -99,14 +100,14 @@ class GenerateResult():
     def friple_frequency_analysis(self):
         objective_df = [self.exper_w]
         objective_storage = [self.path]
-        print(-self.n_optimizations)
         bench_w = [self.bench_w.iloc[-self.n_optimizations+time] for time in range(self.n_optimizations)]
         returns = np.array([self.returns.iloc[-self.n_optimizations+time] for time in range(self.n_optimizations)])+1
 
-        for i in range(0,len(objective_df),1):
-            exper_w = [objective_df[i].iloc[-self.n_optimizations+time,:] for time in range(self.n_optimizations)]
-            analysis = MOGA(None, None,None)
-            analysis = MOGA(objective_df[i], n_sectors=self.n_sectors, n_stocks_per_sector=self.n_stock)
+        len(objective_df)
+        for dataset in range(0,len(objective_df),1):
+            exper_w = [objective_df[dataset].iloc[-self.n_optimizations+time-1,:] for time in range(self.n_optimizations)]
+            # analysis = MOGA(None, None,None)
+            analysis = MOGA(objective_df[dataset], n_sectors=self.n_sectors, n_stocks_per_sector=self.n_stock)
             analysis.frequency_analyser()
 
             exper_returns = np.cumprod([np.dot(exper_w[i],returns[i]) for i in range(len(exper_w))])
@@ -120,16 +121,18 @@ class GenerateResult():
             active_return = np.cumprod([port_sel_prod[i]*port_all_prod[i] for i in range(self.n_optimizations)])
             average_esg = [exper_w[i]@self.esg_data for i in range(self.n_optimizations)]
 
-            self.store_values(i, 
+            self.store_values(dataset, 
                               port_all, port_sel, 
                               active_return, 
                               exper_returns, bench_returns, 
                               average_esg)
             
-            self.plot_values(objective_storage[i],
+            self.plot_values(objective_storage[dataset],
                              port_all, port_sel,
                              active_return,
                              exper_returns, bench_returns,
                              average_esg)
+            if dataset == 0:
+                print(self.exper_analysis["return"])
         print("----Analysis completed succesfully----")
 

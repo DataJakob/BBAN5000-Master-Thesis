@@ -52,44 +52,44 @@ class RL_Model():
         train_env = DummyVecEnv([lambda: train_env])
 
         # Initialize the SAC model
-        # model = SAC(
-        #     # policy=CSACP,
-        #     # policy_kwargs={
-        #     #     "features_extractor_kwargs": {"features_dim": 256},
-        #     #     "optimizer_class": Adam,
-        #     # },
-        #     policy="MlpPolicy",
-        #     policy_kwargs=dict(net_arch=[256, 256]),  # Larger network
-        #     env=train_env,
-        #     verbose=1,              # Printing
-        #     learning_rate=0.001,     # Learning rate
-        #     buffer_size=50000,    # Memory usage
-        #     batch_size=128,         # Batch size for training  (higher= stable updates and exploitation, and vice versa)
-        #     ent_coef='auto',        # Entropy coefficient (higher=more exploration, and vice versa)
-        #     gamma=0.95,             # Discount factor (time value of older rewards/observations)
-        #     tau=0.005,              # Target network update rate
-        #     train_freq=1,           # Train every step (higher=policy update frequency and exploitation, and vice versa)
-        #     gradient_steps=1,  # Gradient steps per update
-        #     seed=42  # Random seed for reproducibility
-        # )
-        # Initialize the PPO model
-        model = PPO(
+        model = SAC(
+            # policy=CSACP,
+            # policy_kwargs={
+            #     "features_extractor_kwargs": {"features_dim": 256},
+            #     "optimizer_class": Adam,
+            # },
             policy="MlpPolicy",
-            policy_kwargs=dict(net_arch=[128, 128]),  # Larger network
+            policy_kwargs=dict(net_arch=[256, 256]),  # Larger network
             env=train_env,
             verbose=1,              # Printing
-            learning_rate=0.00001,   # Typically lower than SAC (PPO is more sensitive)
-            n_steps=2048,           # Number of steps to run per environment per update
-            batch_size=64,          # Minibatch size (smaller than SAC)
-            n_epochs=10,            # Number of optimization epochs per update
-            gamma=0.9,             # Discount factor (typically higher than SAC)
-            gae_lambda=0.95,        # Factor for trade-off of bias vs variance for GAE
-            clip_range=0.2,         # Clipping parameter for the policy loss
-            clip_range_vf=None,     # Clipping parameter for the value function
-            ent_coef=0.003,           # Entropy coefficient (PPO often uses lower than SAC)
-            max_grad_norm=0.5,      # Maximum gradient norm for clipping
-            seed=42                 # Random seed for reproducibility
+            learning_rate=0.0003,     # Learning rate
+            buffer_size=50000,    # Memory usage
+            batch_size=256,         # Batch size for training  (higher= stable updates and exploitation, and vice versa)
+            ent_coef='auto',        # Entropy coefficient (higher=more exploration, and vice versa)
+            gamma=0.97,             # Discount factor (time value of older rewards/observations)
+            tau=0.005,              # Target network update rate
+            train_freq=1,           # Train every step (higher=policy update frequency and exploitation, and vice versa)
+            gradient_steps=4,  # Gradient steps per update
+            seed=42  # Random seed for reproducibility
         )
+        # Initialize the PPO model
+        # model = PPO(
+        #     policy="MlpPolicy",
+        #     policy_kwargs=dict(net_arch=[128, 128]),  # Larger network
+        #     env=train_env,
+        #     verbose=1,              # Printing
+        #     learning_rate=0.00001,   # Typically lower than SAC (PPO is more sensitive)
+        #     n_steps=2048,           # Number of steps to run per environment per update
+        #     batch_size=64,          # Minibatch size (smaller than SAC)
+        #     n_epochs=10,            # Number of optimization epochs per update
+        #     gamma=0.9,             # Discount factor (typically higher than SAC)
+        #     gae_lambda=0.95,        # Factor for trade-off of bias vs variance for GAE
+        #     clip_range=0.2,         # Clipping parameter for the policy loss
+        #     clip_range_vf=None,     # Clipping parameter for the value function
+        #     ent_coef=0.003,           # Entropy coefficient (PPO often uses lower than SAC)
+        #     max_grad_norm=0.5,      # Maximum gradient norm for clipping
+        #     seed=42                 # Random seed for reproducibility
+        # )
 
         # Train, save and store
         model.learn(total_timesteps=self.total_timesteps)

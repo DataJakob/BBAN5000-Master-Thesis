@@ -40,10 +40,11 @@ class MencheroOGA():
             experimental_w (list): A nested list of experimental/portfolio weights corresponding to stocks over multiple time periods.
         """
         self.benchmark_w =  pd.read_csv("Data/MPT_weights.csv")
-        self.experimental_w = experimental
+        self.experimental_w = experimental.iloc[:-1]
         self.returns = pd.read_csv("Data/StockReturns.csv")
 
-        self.n_optimizations: int = self.benchmark_w.shape[0]
+        # All optimizations weights are to be multiplied with returns for time t+1
+        self.n_optimizations: int = self.benchmark_w.shape[0] - 1
         
         self.n_sectors = n_sectors
         self.n_stocks = n_stocks_per_sector

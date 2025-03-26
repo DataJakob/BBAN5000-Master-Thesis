@@ -51,6 +51,7 @@ class PortfolioEnvironment(gym.Env):
         self.esg_compliancy = esg_compliancy
 
 
+
     def reset(self, seed=42):
         """
         Resets the environment to an initial state and returns the initial observation.
@@ -71,22 +72,29 @@ class PortfolioEnvironment(gym.Env):
 
 
 
+
     def _get_observation(self):
         """
         Generates the observation for the current step based on historical data.
+        Handles initial cases where there isn't enough history.
         """
-        end = self.current_step + self.window_size
-        obs = self.stock_data[self.current_step:end]
+        # Get available historical data
+        start_idx = max(0, self.current_step - self.window_size)
+        obs = self.stock_data.iloc[start_idx:self.current_step].values
+        
+        # Pad with mean if not enough data
         if len(obs) < self.window_size:
-            # Use mean-based padding instead of zeros
-            padding = np.tile(np.mean(obs, axis=0), (self.window_size - len(obs), 1))
-            obs = np.vstack((obs, padding))
-        obs = np.array(obs, dtype=np.float32)
-        # Check for NaN in observations
-        if np.isnan(obs).any():
-            raise ValueError("Observation contains NaN values.")
-        return obs
-
+            padding_needed = self.window_size - len(obs)
+            if len(obs) > 0:  # If we have some data, use its mean
+                padding = np.tile(np.nanmean(obs, axis=0), (padding_needed, 1))
+            else:  # If no data at all, use zeros
+                padding = np.zeros((padding_needed, self.num_stocks))
+            obs = np.vstack((padding, obs))
+        
+        # Ensure no NaN values remain
+        obs = np.nan_to_num(obs, nan=0.0)
+        
+        return obs.astype(np.float32)
 
 
 
@@ -150,73 +158,137 @@ class PortfolioEnvironment(gym.Env):
             return 0.0
         return returns[-1]
     def penalised_reward(self, reward, esg_score):
+        # Ensure esg_score is a scalar
+        if isinstance(esg_score, (np.ndarray, list)):
+            esg_score = esg_score[0]  # Take first element if array
+            
+        # Check for invalid values
+        if np.isnan(esg_score).any() or np.isinf(esg_score).any():
+            esg_score = 0.0
+            
         if np.isnan(reward) or np.isinf(reward):
-            reward = 0.0  # Default to 0 if reward is invalid
-        if np.isnan(esg_score) or np.isinf(esg_score):
-            esg_score = 0.0  # Default to 0 if ESG score is invalid
-        answer = reward - 0.3 * ((reward / 100) * (esg_score * 2.5))
-        return answer
+            reward = 0.0
+            
+        return reward - 0.3 * ((reward / 100) * (esg_score * 2.5))
 
 
     def step(self, action):
         """
-        Executes a step in the environment by applying the given action.
-
-        Args:
-            action (np.ndarray): Portfolio weights for each stock.
-
-        Returns:
-            observation (np.ndarray): Next state observation.
-            reward (float): Reward obtained from the step.
-            terminated (bool): Whether the episode has ended.
-            truncated (bool): Whether the episode was truncated due to max_steps or cash depletion.
-            info (dict): Additional information (empty).
+        Executes one step in the environment with proper temporal alignment.
+        Weights chosen at step t are applied to returns from t to t+1.
         """
-        # Normalize actions to ensure portfolio weights sum to 1
-        # Normalize actions to ensure portfolio weights sum to 1
-        weights = np.clip(action, 0, 1).astype("float64")
-        sum_weights = np.sum(weights)
-        if sum_weights == 0:
-            # Handle the case where all actions are zero
-            weights = np.ones_like(weights) / len(weights)  # Assign equal weights
+        # 1. Normalize the action to get valid portfolio weights
+        weights = np.clip(action, 0, 1).astype(np.float64)
+        weights_sum = np.sum(weights)
+        if weights_sum == 0:
+            weights = np.ones_like(weights) / len(weights)  # Equal weights if all zeros
         else:
-            weights /= sum_weights  # Normalize to sum to 1
-        # Calculate single-step portfolio return
-        returns = (self.stock_data.iloc[self.current_step + 1] / self.stock_data.iloc[self.current_step]) - 1
-        portfolio_return = np.dot(returns, weights)
-        self.cash *= (1 + portfolio_return)
+            weights /= weights_sum  # Normalize to sum to 1
 
-        # Store portfolio return in the rolling window
-        self.portfolio_returns.append(portfolio_return)
-        if len(self.portfolio_returns) > self.window_size:
-            self.portfolio_returns.pop(0)  # Keep only the last `window_size` returns
-            # Check for NaN in portfolio returns
-        if np.isnan(self.portfolio_returns).any():
-            raise ValueError("Portfolio returns contain NaN values.")
-        esg_score = np.dot(weights, self.esg_data)
+        # 2. Calculate PAST returns (t-1 to t) for reward calculation
+        past_portfolio_return = 0.0
+        if self.current_step > 0:
+            past_returns = (self.stock_data.iloc[self.current_step] / 
+                        self.stock_data.iloc[self.current_step - 1]) - 1
+            past_portfolio_return = np.dot(past_returns, self.current_weights)
+            self.portfolio_returns.append(past_portfolio_return)
+        
+        # 3. Update portfolio value (for logging/tracking)
+        self.cash *= (1 + past_portfolio_return)
+
+        # 4. Calculate reward based on specified objective
+        reward = 0.0
+        if len(self.portfolio_returns) >= 2:  # Need at least 2 returns for ratios
+            if self.objective == "Sharpe":
+                reward = self._calculate_sharpe_ratio(np.array(self.portfolio_returns))
+            elif self.objective == "Sortino":
+                reward = self._calculate_sortino_ratio(np.array(self.portfolio_returns))
+            elif self.objective == "Sterling":
+                reward = self._calculate_sterling_ratio(np.array(self.portfolio_returns))
+            else:
+                reward = self._calculate_portfolio_return(np.array(self.portfolio_returns))
+
+        # 5. Calculate ESG score with bounds checking
+        esg_score = 0.0
+        if self.esg_compliancy:
+            try:
+                # esg_index = min(self.current_step, len(self.esg_data) - 1)
+                esg_score = float(np.dot(weights, self.esg_data))
+                reward = self.penalised_reward(reward, esg_score)
+            except (IndexError, AttributeError) as e:
+                reward = max(reward, 0)  # Ensure reward doesn't become negative
+
+        # 6. Store weights for NEXT step's returns (w_t will be used for r_{t+1})
+        self.current_weights = weights
+
+        # 7. Increment step and check termination conditions
+        self.current_step += 1
+        terminated = self.current_step >= len(self.stock_data) - 1
+        truncated = self.current_step >= self.max_steps or self.cash <= 0
+
+        # 8. Get next observation (data up to current_step)
+        observation = self._get_observation()
+
+        return observation, reward, terminated, truncated, {}
+    
+
+
+        # # Normalize actions to ensure portfolio weights sum to 1
+        # # Normalize actions to ensure portfolio weights sum to 1
+        # weights = np.clip(action, 0, 1).astype("float64")
+        # sum_weights = np.sum(weights)
+        # if sum_weights == 0:
+        #     # Handle the case where all actions are zero
+        #     weights = np.ones_like(weights) / len(weights)  # Assign equal weights
+        # else:
+        #     weights /= sum_weights  # Normalize to sum to 1
+        # # Calculate single-step portfolio return
+
+
+
+        # #Delete me
+        # # returns = (self.stock_data.iloc[self.current_step + 1] / self.stock_data.iloc[self.current_step]) - 1
+
+
+        # Or delete me
+        # if self.current_step > 0:
+        #     returns = (self.stock_data.iloc[self.current_step] / self.stock_data.iloc[self.current_step - 1]) - 1
+        # else:
+        #     returns = np.zeros(self.num_stocks)  # No returns at step 0
+        # portfolio_return = np.dot(returns, weights)
+        # self.cash *= (1 + portfolio_return)
+
+        # # Store portfolio return in the rolling window
+        # self.portfolio_returns.append(portfolio_return)
+        # if len(self.portfolio_returns) > self.window_size:
+        #     self.portfolio_returns.pop(0)  # Keep only the last `window_size` returns
+        #     # Check for NaN in portfolio returns
+        # if np.isnan(self.portfolio_returns).any():
+        #     raise ValueError("Portfolio returns contain NaN values.")
+        # esg_score = np.dot(weights, self.esg_data)
 
             
 
-        # Choose one reward function (e.g., Sharpe ratio) as the primary reward
-        if self.objective == "Sharpe":
-            reward = self._calculate_sharpe_ratio(np.array(self.portfolio_returns)) 
-        elif self.objective == "Sortino": 
-            reward = self._calculate_sortino_ratio(np.array(self.portfolio_returns)) 
-        elif self.objective == "Sterling":
-            reward = self._calculate_sterling_ratio(np.array(self.portfolio_returns)) 
-        else: 
-            reward = self._calculate_portfolio_return(np.array(self.portfolio_returns))
+        # # Choose one reward function (e.g., Sharpe ratio) as the primary reward
+        # if self.objective == "Sharpe":
+        #     reward = self._calculate_sharpe_ratio(np.array(self.portfolio_returns)) 
+        # elif self.objective == "Sortino": 
+        #     reward = self._calculate_sortino_ratio(np.array(self.portfolio_returns)) 
+        # elif self.objective == "Sterling":
+        #     reward = self._calculate_sterling_ratio(np.array(self.portfolio_returns)) 
+        # else: 
+        #     reward = self._calculate_portfolio_return(np.array(self.portfolio_returns))
         
-        if self.esg_compliancy == True:
-            reward = self.penalised_reward(reward, esg_score)
+        # if self.esg_compliancy == True:
+        #     reward = self.penalised_reward(reward, esg_score)
 
-        # Increment step
-        self.current_step += 1
-        # Determine if the episode is over
-        terminated = self.current_step >= (len(self.stock_data) - 1)
-        truncated = bool(self.current_step >= self.max_steps or self.cash <= 0)
+        # # Increment step
+        # self.current_step += 1
+        # # Determine if the episode is over
+        # terminated = self.current_step >= (len(self.stock_data) - 1)
+        # truncated = bool(self.current_step >= self.max_steps or self.cash <= 0)
 
-        return self._get_observation(), reward, terminated, truncated, {}
+        # return self._get_observation(), reward, terminated, truncated, {}
 
 
 

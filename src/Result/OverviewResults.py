@@ -11,7 +11,8 @@ class ResultConveyor():
 
     def __init__(self, analysis_list, n_optimizations):
         self.analysis_list = analysis_list
-        self.n_optimizations = n_optimizations
+        # All optimizations weights are to be multiplied with returns for time t+1
+        self.n_optimizations = n_optimizations -1
 
 
 
@@ -21,7 +22,7 @@ class ResultConveyor():
         act_port = []
 
         for item in self.analysis_list:
-            sel_eff = np.std([np.prod(item.exper_analysis["sector_selection"][i]+1) for i in range(self.n_optimizations)]) - np.mean(item.exper_analysis["sector_allocation"]-1) 
+            sel_eff = np.std([np.prod(item.exper_analysis["sector_selection"][i]+1) for i in range(self.n_optimizations)]) - np.mean(item.exper_analysis["sector_selection"]-1) 
             all_eff = np.std([np.prod(item.exper_analysis["sector_allocation"][i]+1) for i in range(self.n_optimizations)]) - np.mean(item.exper_analysis["sector_allocation"]-1)
             act_ret = item.exper_analysis["active_return"][-1]
             sel_port.append(sel_eff)
@@ -44,7 +45,7 @@ class ResultConveyor():
                 )
         for i in range(8):
             plt.annotate(txt[i],
-                (all_port[i]+0.00005,sel_port[i]+0.0000),
+                (all_port[i]+0.0,sel_port[i]+0.0),
             )
         plt.xlabel(r'($\sigma$'+"-"+r"$\mu$)"+" Allocation")
         plt.ylabel(r'($\sigma$'+"-"+r"$\mu$)"+" Selection")
