@@ -23,13 +23,13 @@ n_sectors = 6
 n_stocks_per_sector = 4
 
 # For RL algorithm
-history_usage_RL = 15
+history_usage_RL = 10
 """------------------------------------------------"""
 # Defining stock pool
 ticker_df =  pd.DataFrame()
 ticker_df["Petroleum"] = ["EQNR.OL", "AKRBP.OL", "SUBC.OL", "BWO.OL",]
 ticker_df["Seafood (food)"] = ["ORK.OL", "MOWI.OL", "SALM.OL", "LSG.OL"]
-ticker_df["Materials"] = ["NHY.OL", "YAR.OL", "RECSI.OL", "BRG.OL"] 
+ticker_df["Materials"] = ["NHY.OL", "YAR.OL", "RECSI.OL", "BRG.OL"]  #del this
 ticker_df["Technologies"] = ["TEL.OL", "NOD.OL", "ATEA.OL", "BOUV.OL"]
 ticker_df["Financial"] = ["STB.OL", "DNB.OL", "GJF.OL", "AKER.OL"]
 ticker_df["Shipping"] = ["WAWI.OL", "SNI.OL", "BELCO.OL", "ODF.OL"]
@@ -52,7 +52,7 @@ esg_scores = np.array([36.6, 35.3, 17.9, 18,
 # benchmark = MPT(history_usage, trading_n)
 # # IMPORTANT: In order to see  the effect of the weights, algo exclude last observation from optimization
 # benchmark.frequency_optimizing()
-# """------------------------------------------------"""
+"""------------------------------------------------"""
 objectives = ["Return", "Sharpe", "Sortino", "Sterling", "Return", "Sharpe", "Sortino", "Sterling"]
 esg_compliancy = [True, True, True, True, False, False, False, False]
 # objectives = ["Sortino", "Sterling"]
@@ -63,7 +63,7 @@ for i in range(len(objectives)):
     reinforcement = RLM(esg_scores, 
                         objective=objectives[i],
                         window_size=history_usage_RL,
-                        total_timesteps=1000,
+                        total_timesteps=75000,
                         esg_compliancy=esg_compliancy[i],
                         )
     reinforcement.train_model()

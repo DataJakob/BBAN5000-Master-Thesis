@@ -35,7 +35,7 @@ class RL_Model():
 
     def train_model(self):
         stock_data_train, stock_data_test = train_test_split(
-            self.stock_prices, test_size=0.2, shuffle=False
+            self.stock_prices, test_size=0.1, shuffle=False
         )
         """
         Doc string
@@ -59,19 +59,20 @@ class RL_Model():
             #     "optimizer_class": Adam,
             # },
             policy="MlpPolicy",
-            policy_kwargs=dict(net_arch=[256, 256]),  # Larger network
+            policy_kwargs=dict(net_arch=[256, 256, 128]),  # Larger network
             env=train_env,
-            verbose=1,              # Printing
-            learning_rate=0.0003,     # Learning rate
-            buffer_size=50000,    # Memory usage
-            batch_size=256,         # Batch size for training  (higher= stable updates and exploitation, and vice versa)
-            ent_coef='auto',        # Entropy coefficient (higher=more exploration, and vice versa)
-            gamma=0.97,             # Discount factor (time value of older rewards/observations)
-            tau=0.005,              # Target network update rate
-            train_freq=1,           # Train every step (higher=policy update frequency and exploitation, and vice versa)
-            gradient_steps=4,  # Gradient steps per update
-            seed=42  # Random seed for reproducibility
+            verbose=0,              # Printing
+            learning_rate=0.0001,    # Learning rate
+            buffer_size=100000,      # Memory usage
+            batch_size=512,         # Batch size for training  (higher= stable updates and exploitation, and vice versa)
+            ent_coef=0.05,        # Entropy coefficient (higher=more exploration, and vice versa)
+            gamma=0.98,             # Discount factor (time value of older rewards/observations)
+            tau=0.001,              # Target network update rate
+            train_freq=4,           # Train every step (higher=policy update frequency and exploitation, and vice versa)
+            gradient_steps=2,       # Gradient steps per update
+            seed=42                 # Random seed for reproducibility
         )
+
         # Initialize the PPO model
         # model = PPO(
         #     policy="MlpPolicy",
