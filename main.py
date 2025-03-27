@@ -17,13 +17,13 @@ from src.Result.OverviewResults import ResultConveyor as RC
 
 """------------------------------------------------"""
 # Define necessary non-fixed variables
-trading_n = 31
-history_usage = 100
+trading_n = 400
+history_usage = 252
 n_sectors = 6
 n_stocks_per_sector = 4
 
 # For RL algorithm
-history_usage_RL = 10
+history_usage_RL = 25
 """------------------------------------------------"""
 # Defining stock pool
 ticker_df =  pd.DataFrame()
@@ -42,7 +42,7 @@ esg_scores = np.array([36.6, 35.3, 17.9, 18,
                 19.8, 13.8, 18.1, 19, 
                 17.2, 14, 17.2, 19.5, 
                 19.7, 21.2, 26.8, 19.3])
-"""------------------------------------------------"""
+# """------------------------------------------------"""
 # # Retrieve data from yf API: y-m-d
 # data = DatRet(ticker_df, "2013-01-01", "2024-12-31")
 # # In function below, set log=True to check for data availability
@@ -52,18 +52,17 @@ esg_scores = np.array([36.6, 35.3, 17.9, 18,
 # benchmark = MPT(history_usage, trading_n)
 # # IMPORTANT: In order to see  the effect of the weights, algo exclude last observation from optimization
 # benchmark.frequency_optimizing()
-"""------------------------------------------------"""
+# """------------------------------------------------"""
 objectives = ["Return", "Sharpe", "Sortino", "Sterling", "Return", "Sharpe", "Sortino", "Sterling"]
 esg_compliancy = [True, True, True, True, False, False, False, False]
 # objectives = ["Sortino", "Sterling"]
 # esg_compliancy = [False, False]
 
-
 for i in range(len(objectives)):
     reinforcement = RLM(esg_scores, 
                         objective=objectives[i],
                         window_size=history_usage_RL,
-                        total_timesteps=75000,
+                        total_timesteps=5000,
                         esg_compliancy=esg_compliancy[i],
                         )
     reinforcement.train_model()

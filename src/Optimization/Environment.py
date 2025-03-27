@@ -72,27 +72,15 @@ class PortfolioEnvironment(gym.Env):
 
 
 
-
     def _get_observation(self):
-        """
-        Generates the observation for the current step based on historical data.
-        Handles initial cases where there isn't enough history.
-        """
-        # Get available historical data
+        """Returns raw returns data without normalization"""
         start_idx = max(0, self.current_step - self.window_size)
-        obs = self.stock_data.iloc[start_idx:self.current_step].values
+        obs = self.stock_data.iloc[start_idx:self.current_step].values  # Already returns
         
-        # Pad with mean if not enough data
+        # Pad with zeros (not mean!) if insufficient history
         if len(obs) < self.window_size:
-            padding_needed = self.window_size - len(obs)
-            if len(obs) > 0:  # If we have some data, use its mean
-                padding = np.tile(np.nanmean(obs, axis=0), (padding_needed, 1))
-            else:  # If no data at all, use zeros
-                padding = np.zeros((padding_needed, self.num_stocks))
+            padding = np.zeros((self.window_size - len(obs), self.num_stocks))
             obs = np.vstack((padding, obs))
-        
-        # Ensure no NaN values remain
-        obs = np.nan_to_num(obs, nan=0.0)
         
         return obs.astype(np.float32)
 
@@ -101,13 +89,6 @@ class PortfolioEnvironment(gym.Env):
     def _calculate_sharpe_ratio(self, returns, risk_free_rate=0.0):
         """
         Calculates the Sharpe ratio for the portfolio.
-
-        Args:
-            returns (np.ndarray): Array of portfolio returns.
-            risk_free_rate (float): Risk-free rate. Defaults to 0.0.
-
-        Returns:
-            sharpe_ratio (float): Sharpe ratio.
         """
         excess_returns = returns - risk_free_rate
         std_dev = np.std(excess_returns)
@@ -132,12 +113,6 @@ class PortfolioEnvironment(gym.Env):
     def _calculate_sterling_ratio(self, returns):
         """
         Calculates the Sterling ratio for the portfolio.
-
-        Args:
-            returns (np.ndarray): Array of portfolio returns.
-
-        Returns:
-            sterling_ratio (float): Sterling ratio.
         """
         average_return = np.mean(returns)
         max_drawdown = np.max(np.maximum.accumulate(returns) - returns)
@@ -147,12 +122,6 @@ class PortfolioEnvironment(gym.Env):
     def _calculate_portfolio_return(self, returns):
         """
         Calculates the cumulative portfolio return.
-
-        Args:
-            returns (np.ndarray): Array of portfolio returns.
-
-        Returns:
-            portfolio_return (float): Cumulative portfolio return.
         """
         if len(returns) == 0:
             return 0.0
@@ -178,7 +147,9 @@ class PortfolioEnvironment(gym.Env):
         Weights chosen at step t are applied to returns from t to t+1.
         """
         # 1. Normalize the action to get valid portfolio weights
-        weights = np.clip(action, 0, 1).astype(np.float64)
+        # weights = np.clip(action, 0, 1).astype(np.float64)
+        # Replace clipping with softmax:
+        weights = np.exp(action) / (np.sum(np.exp(action))+1e-8)  # Ensures sum=1, no clipping
         weights_sum = np.sum(weights)
         if weights_sum == 0:
             weights = np.ones_like(weights) / len(weights)  # Equal weights if all zeros
@@ -188,8 +159,7 @@ class PortfolioEnvironment(gym.Env):
         # 2. Calculate PAST returns (t-1 to t) for reward calculation
         past_portfolio_return = 0.0
         if self.current_step > 0:
-            past_returns = (self.stock_data.iloc[self.current_step] / 
-                        self.stock_data.iloc[self.current_step - 1]) - 1
+            past_returns = self.stock_data.iloc[self.current_step].values  # Direct returns!
             past_portfolio_return = np.dot(past_returns, self.current_weights)
             self.portfolio_returns.append(past_portfolio_return)
         
@@ -198,15 +168,17 @@ class PortfolioEnvironment(gym.Env):
 
         # 4. Calculate reward based on specified objective
         reward = 0.0
-        if len(self.portfolio_returns) >= 2:  # Need at least 2 returns for ratios
+        rolling_window = 30  # Adjust based on your data frequency
+        if (len(self.portfolio_returns) >= rolling_window) and len(self.portfolio_returns) >=2:
+            recent_returns = np.array(self.portfolio_returns[-rolling_window:])
             if self.objective == "Sharpe":
-                reward = self._calculate_sharpe_ratio(np.array(self.portfolio_returns))
+                reward = self._calculate_sharpe_ratio(recent_returns)
             elif self.objective == "Sortino":
-                reward = self._calculate_sortino_ratio(np.array(self.portfolio_returns))
+                reward = self._calculate_sortino_ratio(recent_returns)
             elif self.objective == "Sterling":
-                reward = self._calculate_sterling_ratio(np.array(self.portfolio_returns))
+                reward = self._calculate_sterling_ratio(recent_returns)
             else:
-                reward = self._calculate_portfolio_return(np.array(self.portfolio_returns))
+                reward = self._calculate_portfolio_return(recent_returns)
 
         # 5. Calculate ESG score with bounds checking
         esg_score = 0.0
@@ -231,65 +203,6 @@ class PortfolioEnvironment(gym.Env):
 
         return observation, reward, terminated, truncated, {}
     
-
-
-        # # Normalize actions to ensure portfolio weights sum to 1
-        # # Normalize actions to ensure portfolio weights sum to 1
-        # weights = np.clip(action, 0, 1).astype("float64")
-        # sum_weights = np.sum(weights)
-        # if sum_weights == 0:
-        #     # Handle the case where all actions are zero
-        #     weights = np.ones_like(weights) / len(weights)  # Assign equal weights
-        # else:
-        #     weights /= sum_weights  # Normalize to sum to 1
-        # # Calculate single-step portfolio return
-
-
-
-        # #Delete me
-        # # returns = (self.stock_data.iloc[self.current_step + 1] / self.stock_data.iloc[self.current_step]) - 1
-
-
-        # Or delete me
-        # if self.current_step > 0:
-        #     returns = (self.stock_data.iloc[self.current_step] / self.stock_data.iloc[self.current_step - 1]) - 1
-        # else:
-        #     returns = np.zeros(self.num_stocks)  # No returns at step 0
-        # portfolio_return = np.dot(returns, weights)
-        # self.cash *= (1 + portfolio_return)
-
-        # # Store portfolio return in the rolling window
-        # self.portfolio_returns.append(portfolio_return)
-        # if len(self.portfolio_returns) > self.window_size:
-        #     self.portfolio_returns.pop(0)  # Keep only the last `window_size` returns
-        #     # Check for NaN in portfolio returns
-        # if np.isnan(self.portfolio_returns).any():
-        #     raise ValueError("Portfolio returns contain NaN values.")
-        # esg_score = np.dot(weights, self.esg_data)
-
-            
-
-        # # Choose one reward function (e.g., Sharpe ratio) as the primary reward
-        # if self.objective == "Sharpe":
-        #     reward = self._calculate_sharpe_ratio(np.array(self.portfolio_returns)) 
-        # elif self.objective == "Sortino": 
-        #     reward = self._calculate_sortino_ratio(np.array(self.portfolio_returns)) 
-        # elif self.objective == "Sterling":
-        #     reward = self._calculate_sterling_ratio(np.array(self.portfolio_returns)) 
-        # else: 
-        #     reward = self._calculate_portfolio_return(np.array(self.portfolio_returns))
-        
-        # if self.esg_compliancy == True:
-        #     reward = self.penalised_reward(reward, esg_score)
-
-        # # Increment step
-        # self.current_step += 1
-        # # Determine if the episode is over
-        # terminated = self.current_step >= (len(self.stock_data) - 1)
-        # truncated = bool(self.current_step >= self.max_steps or self.cash <= 0)
-
-        # return self._get_observation(), reward, terminated, truncated, {}
-
 
 
     def render(self):

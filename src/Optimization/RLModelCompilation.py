@@ -18,7 +18,7 @@ class RL_Model():
     Doc string 
     """
     def __init__(self, esg_data, objective, window_size, total_timesteps, esg_compliancy: bool):
-        self.stock_prices = pd.read_csv("Data/StockPrices.csv")
+        self.stock_prices = pd.read_csv("Data/StockReturns.csv")
         # self.stock_prices = self.stock_prices.iloc[1:]
         self.esg_data = esg_data
 
@@ -59,38 +59,19 @@ class RL_Model():
             #     "optimizer_class": Adam,
             # },
             policy="MlpPolicy",
-            policy_kwargs=dict(net_arch=[256, 256, 128]),  # Larger network
+            policy_kwargs=dict(net_arch=[64, 64]),  # Larger network
             env=train_env,
             verbose=0,              # Printing
             learning_rate=0.0001,    # Learning rate
             buffer_size=100000,      # Memory usage
-            batch_size=512,         # Batch size for training  (higher= stable updates and exploitation, and vice versa)
-            ent_coef=0.05,        # Entropy coefficient (higher=more exploration, and vice versa)
-            gamma=0.98,             # Discount factor (time value of older rewards/observations)
+            batch_size=256,         # Batch size for training  (higher= stable updates and exploitation, and vice versa)
+            ent_coef=0.01,        # Entropy coefficient (higher=more exploration, and vice versa)
+            gamma=0.9,             # Discount factor (time value of older rewards/observations)
             tau=0.001,              # Target network update rate
-            train_freq=4,           # Train every step (higher=policy update frequency and exploitation, and vice versa)
+            train_freq=2,           # Train every step (higher=policy update frequency and exploitation, and vice versa)
             gradient_steps=2,       # Gradient steps per update
             seed=42                 # Random seed for reproducibility
         )
-
-        # Initialize the PPO model
-        # model = PPO(
-        #     policy="MlpPolicy",
-        #     policy_kwargs=dict(net_arch=[128, 128]),  # Larger network
-        #     env=train_env,
-        #     verbose=1,              # Printing
-        #     learning_rate=0.00001,   # Typically lower than SAC (PPO is more sensitive)
-        #     n_steps=2048,           # Number of steps to run per environment per update
-        #     batch_size=64,          # Minibatch size (smaller than SAC)
-        #     n_epochs=10,            # Number of optimization epochs per update
-        #     gamma=0.9,             # Discount factor (typically higher than SAC)
-        #     gae_lambda=0.95,        # Factor for trade-off of bias vs variance for GAE
-        #     clip_range=0.2,         # Clipping parameter for the policy loss
-        #     clip_range_vf=None,     # Clipping parameter for the value function
-        #     ent_coef=0.003,           # Entropy coefficient (PPO often uses lower than SAC)
-        #     max_grad_norm=0.5,      # Maximum gradient norm for clipping
-        #     seed=42                 # Random seed for reproducibility
-        # )
 
         # Train, save and store
         model.learn(total_timesteps=self.total_timesteps)

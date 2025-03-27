@@ -31,7 +31,7 @@ class ResultConveyor():
 
         def minmax(arr):
             arr = np.array(arr)
-            relation = 100 / (max(arr)- min(arr))
+            relation = 100 / (max(arr)- min(arr)+1e-9)
             arr = arr - min(arr)
             arr *= relation
             return arr
