@@ -62,7 +62,7 @@ for i in range(len(objectives)):
     reinforcement = RLM(esg_scores, 
                         objective=objectives[i],
                         window_size=history_usage_RL,
-                        total_timesteps=5000,
+                        total_timesteps=1000,
                         esg_compliancy=esg_compliancy[i],
                         )
     reinforcement.train_model()

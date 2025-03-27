@@ -92,35 +92,46 @@ class RL_Model():
                           esg_compliancy = self.esg_compliancy)
         test_env = DummyVecEnv([lambda: test_env])
 
-        # Initialize the testing environment
         obs = test_env.reset()
-
-        # Create a list to store the weights and portfolio values
         weights_history = []
         portfolio_values = []
+        returns_history = []
 
         # Run the testing loop
-        for _ in range(len(self.test_data) - 1):  # Adjust for test data length
+        # for _ in range(len(self.test_data) - 1):  # Adjust for test data length
+        while True:
             # Predict the action (portfolio weights) using the trained model
             action, _states = self.model.predict(obs, deterministic=True)
-            
-            # Normalize the action to ensure weights sum to 1
-            normalized_action = np.clip(action, 0, 1).astype("float64")  # Clip to [0, 1]
-            normalized_action /= np.sum(normalized_action)  # Normalize to sum to 1
-            
+            weights = action
+            # weights = np.exp(action) / np.sum(np.exp(action))  # Proper weight normalization
+
             # Execute the action in the testing environment
-            obs, rewards, dones, info = test_env.step(normalized_action)
+            obs, reward, done, info = test_env.step(weights)
+                
+            # Store results
+            weights_history.append(np.squeeze(weights))
+            # portfolio_values.append(info[0]['portfolio_value'])  # More reliable than cash
+            # returns_history.append(info[0]['portfolio_return'])
             
-            # Store the normalized weights and portfolio value
-            weights_history.append(np.squeeze(normalized_action))  # Remove the extra dimension
-            portfolio_values.append(test_env.envs[0].cash)  # Access the cash value from the environment
-            
-            # Render the environment (optional)
+            # Render if desired
             test_env.render()
             
-            # Reset the environment if the episode is done
-            if dones:
-                obs = test_env.reset()
+            if done:
+                break
+        weights_df = pd.DataFrame(weights_history, 
+                                columns=[f"Stock_{i+1}" for i in range(test_env.envs[0].num_stocks)])
+        weights_df.to_csv(f"Data/RL_weights_{self.objective}_esg_{self.esg_compliancy}.csv", index=False)
+        
+        # Save performance metrics
+        # pd.DataFrame({
+        #     'portfolio_value': portfolio_values,
+        #     'returns': returns_history
+        # }).to_csv(f"Data/RL_performance_{self.objective}_esg_{self.esg_compliancy}.csv", index=False)
+
+        print("--Testing completed successfully--")
+
+
+
 
         # Convert the weights history to a DataFrame
         weights_df = pd.DataFrame(weights_history, columns=[f"Stock_{i+1}" for i in range(test_env.envs[0].num_stocks)])
