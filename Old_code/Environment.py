@@ -39,7 +39,7 @@ class PortfolioEnvironment(gym.Env):
         self.max_steps = max_steps
         self.window_size = window_size
 
-        self.action_space = spaces.Box(low=0, high=1, shape=(self.num_stocks,), dtype=np.float32)
+        self.action_space = self.action_space = spaces.Box(low=-5, high=5, shape=(self.num_stocks,), dtype=np.float32)
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(self.window_size, self.num_stocks), dtype=np.float32)
 
         self.current_step = 0
@@ -146,15 +146,15 @@ class PortfolioEnvironment(gym.Env):
         Executes one step in the environment with proper temporal alignment.
         Weights chosen at step t are applied to returns from t to t+1.
         """
-        # 1. Normalize the action to get valid portfolio weights
-        # weights = np.clip(action, 0, 1).astype(np.float64)
-        # Replace clipping with softmax:
-        weights = np.exp(action) / (np.sum(np.exp(action))+1e-8)  # Ensures sum=1, no clipping
-        weights_sum = np.sum(weights)
-        if weights_sum == 0:
-            weights = np.ones_like(weights) / len(weights)  # Equal weights if all zeros
-        else:
-            weights /= weights_sum  # Normalize to sum to 1
+        if isinstance(action, np.ndarray) and action.ndim > 1:
+            action = action.squeeze(0)
+        
+        # Convert to weights
+        weights = np.exp(action) / (np.sum(np.exp(action)) + 1e-8)
+        weights = weights / np.sum(weights)
+        self.current_weights = weights
+      
+
 
         # 2. Calculate PAST returns (t-1 to t) for reward calculation
         past_portfolio_return = 0.0
@@ -180,28 +180,28 @@ class PortfolioEnvironment(gym.Env):
             else:
                 reward = self._calculate_portfolio_return(recent_returns)
 
-        # 5. Calculate ESG score with bounds checking
         esg_score = 0.0
         if self.esg_compliancy:
             try:
-                # esg_index = min(self.current_step, len(self.esg_data) - 1)
-                esg_score = float(np.dot(weights, self.esg_data))
-                reward = self.penalised_reward(reward, esg_score)
-            except (IndexError, AttributeError) as e:
-                reward = max(reward, 0)  # Ensure reward doesn't become negative
+                esg_flat = np.asarray(self.esg_data).flatten()
+                weights_flat = np.asarray(weights).flatten()
+                
+                if esg_flat.shape != weights_flat.shape:
+                    esg_flat = esg_flat[:len(weights_flat)]  # Truncate if necessary
+                    
+                esg_score = float(np.dot(weights_flat, esg_flat))
+            except Exception as e:
+                print(f"ESG calculation error: {e}")
 
-        # 6. Store weights for NEXT step's returns (w_t will be used for r_{t+1})
-        self.current_weights = weights
+            # 7. Increment step and check termination conditions
+            self.current_step += 1
+            terminated = self.current_step >= len(self.stock_data) - 1
+            truncated = self.current_step >= self.max_steps or self.cash <= 0
 
-        # 7. Increment step and check termination conditions
-        self.current_step += 1
-        terminated = self.current_step >= len(self.stock_data) - 1
-        truncated = self.current_step >= self.max_steps or self.cash <= 0
+            # 8. Get next observation (data up to current_step)
+            observation = self._get_observation()
 
-        # 8. Get next observation (data up to current_step)
-        observation = self._get_observation()
-
-        return observation, reward, terminated, truncated, {}
+            return observation, reward, terminated, truncated, {}
     
 
 

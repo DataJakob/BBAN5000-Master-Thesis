@@ -53,16 +53,16 @@ esg_scores = np.array([36.6, 35.3, 17.9, 18,
 # # IMPORTANT: In order to see  the effect of the weights, algo exclude last observation from optimization
 # benchmark.frequency_optimizing()
 # """------------------------------------------------"""
-objectives = ["Return", "Sharpe", "Sortino", "Sterling", "Return", "Sharpe", "Sortino", "Sterling"]
-esg_compliancy = [True, True, True, True, False, False, False, False]
-# objectives = ["Sortino", "Sterling"]
-# esg_compliancy = [False, False]
+# objectives = ["Return", "Sharpe", "Sortino", "Sterling", "Return", "Sharpe", "Sortino", "Sterling"]
+# esg_compliancy = [True, True, True, True, False, False, False, False]
+objectives = ["Sortino"]
+esg_compliancy = [True]
 
 for i in range(len(objectives)):
     reinforcement = RLM(esg_scores, 
                         objective=objectives[i],
                         window_size=history_usage_RL,
-                        total_timesteps=1000,
+                        total_timesteps=500,
                         esg_compliancy=esg_compliancy[i],
                         )
     reinforcement.train_model()
