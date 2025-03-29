@@ -5,8 +5,8 @@ from src.Data_Retriever import DataRetriever as DatRet
 
 from src.Optimization.Markowitz_PT import MarkowitzPT as MPT
 
-from src.Optimization.Environment import PortfolioEnvironment as PorEnv
-from src.Optimization.RLModelCompilation import RL_Model as RLM
+# from src.Optimization.Environment import PortfolioEnvironment as PorEnv
+# from src.Optimization.RLModelCompilation import RL_Model as RLM
 from src.Optimization.NeuralNet import CustomNeuralNet as CusNN
 from src.Optimization.NeuralNet import CustomSACPolicy as CSACP
 
@@ -55,18 +55,18 @@ esg_scores = np.array([36.6, 35.3, 17.9, 18,
 # """------------------------------------------------"""
 # objectives = ["Return", "Sharpe", "Sortino", "Sterling", "Return", "Sharpe", "Sortino", "Sterling"]
 # esg_compliancy = [True, True, True, True, False, False, False, False]
-objectives = ["Sortino"]
-esg_compliancy = [True]
+# objectives = ["Sortino"]
+# esg_compliancy = [True]
 
-for i in range(len(objectives)):
-    reinforcement = RLM(esg_scores, 
-                        objective=objectives[i],
-                        window_size=history_usage_RL,
-                        total_timesteps=500,
-                        esg_compliancy=esg_compliancy[i],
-                        )
-    reinforcement.train_model()
-    reinforcement.test_model()
+# for i in range(len(objectives)):
+#     reinforcement = RLM(esg_scores, 
+#                         objective=objectives[i],
+#                         window_size=history_usage_RL,
+#                         total_timesteps=500,
+#                         esg_compliancy=esg_compliancy[i],
+#                         )
+#     reinforcement.train_model()
+#     reinforcement.test_model()
 """------------------------------------------------"""
 paths = ["Return_esg_True", "Sharpe_esg_True",
          "Sortino_esg_True","Sterling_esg_True",
