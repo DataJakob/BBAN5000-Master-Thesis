@@ -61,19 +61,22 @@ class RL_Model():
                            esg_compliancy=self.esg_compliancy
                            )
         
-        # train_env = DummyVecEnv([lambda: train_env])
-        # train_env = VecNormalize(train_env, norm_obs=True, norm_reward=True)
 
         # Initialize the SAC model
-        model = SAC(
+        policy_kwargs = dict(
+            net_arch=dict(pi=[256, 256, 128], qf=[256, 256, 128]),  # Deeper/wider networks
+            activation_fn=nn.SiLU,  # Swish/SiLU outperforms ReLU
+        )
+        model = PPO(
             policy="MlpPolicy",
-            # policy_kwargs=dict(
-            #     net_arch=[dict(pi=[256, 256], vf=[256, 256])],  # Changed to 2x256 layers
-            # ),
-            gamma=0.8,
-            batch_size=256,
-            ent_coef=0.1,
+            policy_kwargs=policy_kwargs,
             env=train_env,
+            gamma=0.96,
+            batch_size=512,
+            ent_coef=0.1,
+            train_freq=(64, "step"),
+            gradient_steps=64,
+            max_grad_norm=0.5,
             buffer_size=100_000,
             verbose=1,
         ).learn(self.total_timesteps)
@@ -92,8 +95,7 @@ class RL_Model():
                            esg_compliancy=self.esg_compliancy
                            )
 
-        # test_env = DummyVecEnv([lambda: test_env])
-        # test_env = VecNormalize(test_env, norm_obs=True, norm_reward=True)
+
 
         obs, additional_info = test_env.reset()
         weights_history = []

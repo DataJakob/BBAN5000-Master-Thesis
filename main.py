@@ -64,7 +64,7 @@ for i in range(len(objectives)):
                         objective=objectives[i],
                         history_usage=history_usage_RL,
                         rolling_reward_window=rolling_reward_window,
-                        total_timesteps=10000,
+                        total_timesteps=200,
                         esg_compliancy=esg_compliancy[i],
                         )
     reinforcement.train_model()
