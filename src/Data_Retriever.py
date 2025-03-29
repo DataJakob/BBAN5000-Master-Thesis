@@ -143,5 +143,8 @@ class DataRetriever():
         rollvol_df = pd.DataFrame(rollvol_array)
         rollvol_dft = rollvol_df.T
         rollvol_dft.to_csv("Data/Input/RollingVol.csv", index=False)
+
+        pd.concat([return_tdf, volume_dft, rollret_dft, rollvol_dft], axis=1).to_csv("Data/Input/Total.csv", index=False)
+
     
         return "--Data retrieved successfully--"

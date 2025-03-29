@@ -25,7 +25,7 @@ class RL_Model():
     Doc string 
     """
     def __init__(self, esg_data, objective, history_usage, rolling_reward_window, total_timesteps, esg_compliancy: bool):
-        self.stock_returns = pd.read_csv("Data/Input/StockReturns.csv")
+        self.stock_info = pd.read_csv("Data/Input/Total.csv")
         self.esg_data = esg_data
 
         self.train_data = None
@@ -47,8 +47,8 @@ class RL_Model():
         """
         split_size = 0.8
 
-        train_data = self.stock_returns.iloc[:int(split_size*len(self.stock_returns))]
-        test_data = self.stock_returns.iloc[int(split_size*len(self.stock_returns)):].reset_index(drop=True)
+        train_data = self.stock_info.iloc[:int(split_size*len(self.stock_info))]
+        test_data = self.stock_info.iloc[int(split_size*len(self.stock_info)):].reset_index(drop=True)
 
         self.train_data = train_data
         self.test_data = test_data
@@ -80,7 +80,6 @@ class RL_Model():
             verbose=1,
         ).learn(self.total_timesteps)
 
-        # Train, save and store
         self.model = model
 
 
@@ -88,7 +87,7 @@ class RL_Model():
     def test_model(self):
         test_env = PorEnv(history_usage=self.history_usage,
                            rolling_reward_window=self.rolling_reward_window,
-                           return_data=self.train_data,
+                           return_data=self.test_data,
                            esg_data=self.esg_data,
                            objective=self.objective,
                            esg_compliancy=self.esg_compliancy
