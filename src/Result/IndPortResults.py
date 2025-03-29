@@ -132,7 +132,7 @@ class GenerateResult():
                              active_return,
                              exper_returns, bench_returns,
                              average_esg)
-            if dataset == 0:
-                print(self.exper_analysis["return"])
+            # if dataset == 0:
+            #     print(self.exper_analysis["return"])
         print("----Analysis completed succesfully----")
 
