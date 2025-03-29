@@ -32,19 +32,19 @@ Install requirements:
 pip install -r requirements.txt
 ```
 
-Now, the "MyVenv" should work as a kernel. Before running a jupyter notebook, change kernel into MyVenv.
+Run main file:
+```bash
+python main.py
+```
 
-<h2> Component To-Do-List</h2>
-<p>
-  ✅ Data Retrival
-  <br>
-  ✅ Exploratory Data  Analysis 
-  <br>
-  ✅ Markowitz Portfolio Theory 
-  <br>
-  ❌ Reinforcement Learning Algorithm Portfolio
-  <br>
-  ✅ OGA model 
-  <br>
-  ✅ Result analysis 
-</p>
+
+<h2> Pipeline:</h2>
+<ol>
+  <li> Setting initial variables</li>
+  <li> Data retrieval (yf): Open, Close, Volume, Rolling Mean, Rolling Volatility</li>
+  <li> Markowitz portfolio optimization, dynamic trading</li>
+  <li> RL optimization, dynamic trading</li>
+  <li> Comparison using OGA (Menchero, 2005)</li>
+  <li> Convey result/comparison, visualizations and tables</li>
+  <li></li>
+</ol>
