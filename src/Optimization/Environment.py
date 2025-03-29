@@ -79,16 +79,9 @@ class PortfolioEnvironment(gym.Env):
         start_idx = max(0, self.current_step -self.history_usage)
         end_idx = self.current_step
 
-        # if self.current_step == 0:
-        #     observation_space = np.array([np.repeat(1e-8, self.n_stocks)])
-        # else:
         observation_space  = self.return_data[start_idx:end_idx].T
 
-        # if self.current_step == 0:
-        #     padding = np.zeros((self.n_stocks, self.history_usage - 1))
-        #     observation_space = np.hstack([padding, observation_space])
         if observation_space.shape[1] < self.history_usage:
-        # else:
             padding = np.zeros((self.n_stocks, self.history_usage - observation_space.shape[1]))
             observation_space = np.hstack([padding, observation_space])
         

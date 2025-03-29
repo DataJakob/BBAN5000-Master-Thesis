@@ -41,7 +41,7 @@ class MencheroOGA():
         """
         self.benchmark_w =  pd.read_csv("Data/MPT_weights.csv")
         self.experimental_w = experimental.iloc[:-1]
-        self.returns = pd.read_csv("Data/StockReturns.csv")
+        self.returns = pd.read_csv("Data/Input/StockReturns.csv")
 
         # All optimizations weights are to be multiplied with returns for time t+1
         self.n_optimizations: int = self.benchmark_w.shape[0] - 1

@@ -25,7 +25,7 @@ class RL_Model():
     Doc string 
     """
     def __init__(self, esg_data, objective, history_usage, rolling_reward_window, total_timesteps, esg_compliancy: bool):
-        self.stock_returns = pd.read_csv("Data/StockReturns.csv")
+        self.stock_returns = pd.read_csv("Data/Input/StockReturns.csv")
         self.esg_data = esg_data
 
         self.train_data = None
@@ -67,16 +67,15 @@ class RL_Model():
             net_arch=dict(pi=[256, 256, 128], qf=[256, 256, 128]),  # Deeper/wider networks
             activation_fn=nn.SiLU,  # Swish/SiLU outperforms ReLU
         )
-        model = PPO(
+        model = SAC(
             policy="MlpPolicy",
             policy_kwargs=policy_kwargs,
             env=train_env,
             gamma=0.96,
-            batch_size=512,
             ent_coef=0.1,
+            batch_size=512,
             train_freq=(64, "step"),
             gradient_steps=64,
-            max_grad_norm=0.5,
             buffer_size=100_000,
             verbose=1,
         ).learn(self.total_timesteps)
