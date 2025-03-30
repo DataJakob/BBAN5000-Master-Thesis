@@ -45,7 +45,7 @@ class RL_Model():
         """
         Doc string
         """
-        split_size = 0.8
+        split_size = 0.85
 
         train_data = self.stock_info.iloc[:int(split_size*len(self.stock_info))]
         test_data = self.stock_info.iloc[int(split_size*len(self.stock_info)):].reset_index(drop=True)
@@ -62,18 +62,24 @@ class RL_Model():
                            )
         
 
-        # Initialize the SAC model
+        # def mlp_with_dropout(dim_input, dim_output):
+        #     return [
+        #         dict(pi=[64, 64], vf=[64, 64])  # pi = actor, vf = critic
+        #     ]
+
+        # # Define policy_kwargs with Dropout
         # policy_kwargs = dict(
-        #     net_arch=dict(pi=[256, 256, 128], qf=[256, 256, 128]),  # Deeper/wider networks
-        #     activation_fn=nn.SiLU,  # Swish/SiLU outperforms ReLU
+        #     net_arch=mlp_with_dropout,  # Custom architecture with dropout
+        #     activation_fn=torch.nn.ReLU,  # Standard activation function
+        #     dropout=0.2  # Dropout rate (this will be passed to the policy network)
         # )
         model = SAC(
             policy="MlpPolicy",
             # policy_kwargs=policy_kwargs,
             env=train_env,
-            gamma=0.95,
-            ent_coef=0.1,
-            batch_size=256,
+            gamma=0.99,
+            ent_coef="auto",
+            batch_size=64,
             train_freq=(64, "step"),
             gradient_steps=64,
             buffer_size=100_000,
@@ -103,8 +109,8 @@ class RL_Model():
         while not finished: 
             action, _ = self.model.predict(obs, deterministic=True)
 
-            weights = np.e**(action+1e-8)
-            weights = weights / (np.sum(weights)+1e-8)
+            weights = np.exp(action+1e-8)
+            weights = weights / (np.sum(weights))
 
             obs, reward, terminated, truncated, info = test_env.step(weights)
             finished = terminated or truncated

@@ -23,7 +23,7 @@ n_sectors = 6
 n_stocks_per_sector = 4
 
 # For RL algorithm
-history_usage_RL = 50
+history_usage_RL = 65
 rolling_reward_window = 10
 """------------------------------------------------"""
 # Defining stock pool
@@ -54,17 +54,17 @@ esg_scores = np.array([36.6, 35.3, 17.9, 18,
 # # IMPORTANT: In order to see  the effect of the weights, algo exclude last observation from optimization
 # benchmark.frequency_optimizing()
 # # """------------------------------------------------"""
-objectives = ["Return", "Sharpe", "Sortino", "Sterling", "Return", "Sharpe", "Sortino", "Sterling"]
-esg_compliancy = [True, True, True, True, False, False, False, False]
-# objectives = ["Sortino"]
-# esg_compliancy = [True]
+# objectives = ["Return", "Sharpe", "Sortino", "Sterling", "Return", "Sharpe", "Sortino", "Sterling"]
+# esg_compliancy = [True, True, True, True, False, False, False, False]
+objectives = ["Sortino"]
+esg_compliancy = [True]
 
 for i in range(len(objectives)):
     reinforcement = RLM(esg_scores, 
                         objective=objectives[i],
                         history_usage=history_usage_RL,
                         rolling_reward_window=rolling_reward_window,
-                        total_timesteps=1500,
+                        total_timesteps=3000,
                         esg_compliancy=esg_compliancy[i],
                         )
     reinforcement.train_model()
