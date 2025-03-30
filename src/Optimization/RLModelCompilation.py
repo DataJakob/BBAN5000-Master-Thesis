@@ -61,25 +61,13 @@ class RL_Model():
                            esg_compliancy=self.esg_compliancy
                            )
         
-
-        # def mlp_with_dropout(dim_input, dim_output):
-        #     return [
-        #         dict(pi=[64, 64], vf=[64, 64])  # pi = actor, vf = critic
-        #     ]
-
-        # # Define policy_kwargs with Dropout
-        # policy_kwargs = dict(
-        #     net_arch=mlp_with_dropout,  # Custom architecture with dropout
-        #     activation_fn=torch.nn.ReLU,  # Standard activation function
-        #     dropout=0.2  # Dropout rate (this will be passed to the policy network)
-        # )
         model = SAC(
             policy="MlpPolicy",
-            # policy_kwargs=policy_kwargs,
             env=train_env,
-            gamma=0.99,
-            ent_coef="auto",
-            batch_size=64,
+            gamma=0.9,
+            learning_rate=0.0004,
+            ent_coef=0.35,
+            batch_size=256,
             train_freq=(64, "step"),
             gradient_steps=64,
             buffer_size=100_000,
@@ -99,26 +87,22 @@ class RL_Model():
                            esg_compliancy=self.esg_compliancy
                            )
 
-
-
         obs, additional_info = test_env.reset()
         weights_history = []
         finished = False
 
-
         while not finished: 
             action, _ = self.model.predict(obs, deterministic=True)
 
-            weights = np.exp(action+1e-8)
-            weights = weights / (np.sum(weights))
+            # weights = np.exp(action+1e-8)
+            # weights = weights / (np.sum(weights))
+            weights = (action+1)/2
+            weights = weights/np.sum(weights)
 
             obs, reward, terminated, truncated, info = test_env.step(weights)
             finished = terminated or truncated
 
             weights_history.append(weights)
-
-
-
 
         weight_df  = pd.DataFrame(weights_history)
         weight_df.to_csv("Data/RL_weights_"+self.objective+"_esg_"+str(self.esg_compliancy)+".csv", 

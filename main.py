@@ -14,7 +14,10 @@ from src.Result.Menchero_OGA import MencheroOGA as MOGA
 from src.Result.IndPortResults import GenerateResult as GR
 from src.Result.OverviewResults import ResultConveyor as RC
 
+import time
 
+"""------------------------------------------------"""
+start_time = time.time()
 """------------------------------------------------"""
 # Define necessary non-fixed variables
 trading_n = 400
@@ -24,7 +27,7 @@ n_stocks_per_sector = 4
 
 # For RL algorithm
 history_usage_RL = 65
-rolling_reward_window = 10
+rolling_reward_window = 15
 """------------------------------------------------"""
 # Defining stock pool
 ticker_df =  pd.DataFrame()
@@ -88,3 +91,7 @@ for i in range(len(paths)):
 theta = RC(analysis_list, trading_n)
 theta.convey_results()
 """------------------------------------------------"""
+
+
+elapsed_time = time.time() - start_time
+print(f"Elapsed time: {elapsed_time:.4f} seconds")
