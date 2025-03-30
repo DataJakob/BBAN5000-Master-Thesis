@@ -12,12 +12,28 @@ from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
 from sklearn.model_selection import train_test_split
 
 from src.Optimization.Environment import PortfolioEnvironment as PorEnv
-from src.Optimization.NeuralNet import CustomNeuralNet as CusNN
-from src.Optimization.NeuralNet import CustomSACPolicy as CSACP
+# from src.Optimization.NeuralNet import CustomNeuralNet as CusNN
+# from src.Optimization.NeuralNet import CustomSACPolicy as CSACP
+from src.Optimization.NeuralNet import SectorLSTMAttentionPolicy
+
 import torch
-from torch import nn
+import torch.nn as nn
+import torch.nn.functional as F
+from stable_baselines3 import SAC
+from stable_baselines3.common.callbacks import EvalCallback, CheckpointCallback
+from stable_baselines3.common.vec_env import DummyVecEnv
+from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
+from torch.utils.tensorboard import SummaryWriter
 
 
+class SectorPortfolioEnv(PorEnv):
+    def get_observation(self):
+        # Get base observation from parent class
+        obs = super().get_observation()
+        
+        # Add sector metadata
+        sector_ids = np.repeat(np.arange(6), 4)
+        return np.concatenate([obs, sector_ids])
 
 
 class RL_Model():
@@ -46,6 +62,7 @@ class RL_Model():
         Doc string
         """
         split_size = 0.8
+        print(self.stock_info.shape[1])
 
         train_data = self.stock_info.iloc[:int(split_size*len(self.stock_info))]
         test_data = self.stock_info.iloc[int(split_size*len(self.stock_info)):].reset_index(drop=True)
@@ -53,45 +70,92 @@ class RL_Model():
         self.train_data = train_data
         self.test_data = test_data
 
-        train_env = PorEnv(history_usage=self.history_usage,
-                           rolling_reward_window=self.rolling_reward_window,
-                           return_data=self.train_data,
-                           esg_data=self.esg_data,
-                           objective=self.objective,
-                           esg_compliancy=self.esg_compliancy
-                           )
-        
+        train_env = DummyVecEnv([lambda: SectorPortfolioEnv(
+            history_usage=self.history_usage,
+            rolling_reward_window=self.rolling_reward_window,
+            return_data=self.train_data,
+            esg_data=self.esg_data,
+            objective=self.objective,
+            esg_compliancy=self.esg_compliancy
+        )])
+        obs, rox =  train_env.reset()
+        print(f"Observation shape: {obs.shape}")  # Should be (3600,)
 
-        # Initialize the SAC model
-        policy_kwargs = dict(
-            net_arch=dict(pi=[256, 256, 128], qf=[256, 256, 128]),  # Deeper/wider networks
-            activation_fn=nn.SiLU,  # Swish/SiLU outperforms ReLU
+        test_env = DummyVecEnv([lambda: SectorPortfolioEnv(
+            history_usage=self.history_usage,
+            rolling_reward_window=self.rolling_reward_window,
+            return_data=self.test_data,
+            esg_data=self.esg_data,
+            objective=self.objective,
+            esg_compliancy=self.esg_compliancy
+        )])
+
+
+        eval_callback = EvalCallback(
+            test_env,
+            best_model_save_path="./logs/",
+            log_path="./logs/",
+            eval_freq=10000,
+            deterministic=True,
+            render=False
         )
+            
+        checkpoint_callback = CheckpointCallback(
+            save_freq=50000,
+            save_path="./checkpoints/",
+            name_prefix="sac_sector"
+        )
+
+        def linear_schedule(initial_value):
+            def schedule(progress_remaining):
+                return initial_value * progress_remaining
+            return schedule
+    
+        # Initialize model
         model = SAC(
-            policy="MlpPolicy",
-            policy_kwargs=policy_kwargs,
-            env=train_env,
-            gamma=0.96,
-            ent_coef=0.1,
+            "MlpPolicy",
+            train_env,
+            learning_rate=linear_schedule(3e-4),
+            buffer_size=60000,
             batch_size=512,
-            train_freq=(64, "step"),
-            gradient_steps=64,
-            buffer_size=100_000,
-            verbose=1,
-        ).learn(self.total_timesteps)
+            ent_coef='auto',
+            gamma=0.97,
+            tau=0.005,
+            policy_kwargs={
+                "features_extractor_class": SectorLSTMAttentionPolicy,
+                "features_extractor_kwargs": dict(features_dim=512),
+                "net_arch": {
+                    "pi": [256, 256],
+                    "qf": [512, 512]
+                }
+            },
+            tensorboard_log="./logs/tensorboard/",
+            verbose=1
+        )
+    # Training parameters
+        model.learn(
+            total_timesteps=self.total_timesteps,
+            callback=[eval_callback, checkpoint_callback],
+            tb_log_name="sac_sector_attention",
+            reset_num_timesteps=False
+        )
+
+        # Save final model
+        model.save("sac_sector_attention_final")
 
         self.model = model
 
 
 
     def test_model(self):
-        test_env = PorEnv(history_usage=self.history_usage,
-                           rolling_reward_window=self.rolling_reward_window,
-                           return_data=self.test_data,
-                           esg_data=self.esg_data,
-                           objective=self.objective,
-                           esg_compliancy=self.esg_compliancy
-                           )
+        test_env = DummyVecEnv([lambda: SectorPortfolioEnv(
+            history_usage=self.history_usage,
+            rolling_reward_window=self.rolling_reward_window,
+            return_data=self.test_data,
+            esg_data=self.esg_data,
+            objective=self.objective,
+            esg_compliancy=self.esg_compliancy
+        )])
 
 
 
@@ -107,11 +171,12 @@ class RL_Model():
             weights = (weights+1e-8) / (np.sum(weights)+1e-8)
 
             obs, reward, terminated, truncated, info = test_env.step(weights)
+            print("Observation shape:", obs.shape)  # Must be (2904,)
             finished = terminated or truncated
 
             weights_history.append(weights)
 
 
         weight_df  = pd.DataFrame(weights_history)
-        weight_df.to_csv("Data/RL_weights_"+self.objective+"_esg_"+str(self.esg_compliancy)+".csv", 
+        weight_df.to_csv("Data/TestPredictions/RL_weights_"+self.objective+"_esg_"+str(self.esg_compliancy)+".csv", 
                           index=False)
