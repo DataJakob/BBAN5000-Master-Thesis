@@ -96,9 +96,10 @@ class PortfolioEnvironment(gym.Env):
         doc string
         """
         # Generate weights based on actions
-        # Forces action from in range (-1,1) to become (0,1)
-        current_weights = (action + 1) / 2                          
-        current_weights = (current_weights+1e-8) / (np.sum(current_weights)+1e-8)
+        if self.current_step == 0:
+            current_weights = self.weights
+        else:
+            current_weights = action
         self.weights_list.append(current_weights)
         
         # Find current weights and multiply with weights

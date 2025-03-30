@@ -71,9 +71,9 @@ class RL_Model():
             policy="MlpPolicy",
             # policy_kwargs=policy_kwargs,
             env=train_env,
-            gamma=0.96,
+            gamma=0.95,
             ent_coef=0.1,
-            batch_size=512,
+            batch_size=256,
             train_freq=(64, "step"),
             gradient_steps=64,
             buffer_size=100_000,
@@ -103,13 +103,15 @@ class RL_Model():
         while not finished: 
             action, _ = self.model.predict(obs, deterministic=True)
 
-            weights = (action+1) / 2
-            weights = (weights+1e-8) / (np.sum(weights)+1e-8)
+            weights = np.e**(action+1e-8)
+            weights = weights / (np.sum(weights)+1e-8)
 
             obs, reward, terminated, truncated, info = test_env.step(weights)
             finished = terminated or truncated
 
             weights_history.append(weights)
+
+
 
 
         weight_df  = pd.DataFrame(weights_history)
