@@ -60,7 +60,7 @@ class PortfolioEnvironment(gym.Env):
         super().reset(seed=seed)
 
         self.current_step = 0
-        self.weights = []
+        self.weights = np.repeat(1/self.n_stocks, self.n_stocks)
         self.portfolio_returns = []
 
         observation = self.get_observation()

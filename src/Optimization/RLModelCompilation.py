@@ -63,13 +63,13 @@ class RL_Model():
         
 
         # Initialize the SAC model
-        policy_kwargs = dict(
-            net_arch=dict(pi=[256, 256, 128], qf=[256, 256, 128]),  # Deeper/wider networks
-            activation_fn=nn.SiLU,  # Swish/SiLU outperforms ReLU
-        )
+        # policy_kwargs = dict(
+        #     net_arch=dict(pi=[256, 256, 128], qf=[256, 256, 128]),  # Deeper/wider networks
+        #     activation_fn=nn.SiLU,  # Swish/SiLU outperforms ReLU
+        # )
         model = SAC(
             policy="MlpPolicy",
-            policy_kwargs=policy_kwargs,
+            # policy_kwargs=policy_kwargs,
             env=train_env,
             gamma=0.96,
             ent_coef=0.1,
