@@ -44,7 +44,7 @@ class GenerateResult():
         ax[0,0].plot(br, color="grey", label="Benchmark")
         ax[0,0].plot(er, color="blue", label="Experimental")
         ax[0,0].plot(ar, color="green", label= "Geometric active return")
-        ax[0,0].scatter(x=np.linspace(0,self.n_optimizations-1,self.n_optimizations), y =(br*ar), 
+        ax[0,0].scatter(x=np.linspace(0,self.n_optimizations-1, self.n_optimizations), y =(br*ar), 
                 s=5, color="black", label="Validity Control")
         ax[0,0].set_ylabel("Return")
         ax[0,0].set_xlabel("Trading times")
