@@ -43,7 +43,7 @@ class PortfolioEnvironment(gym.Env):
                                        shape=(self.n_stocks,),)
         self.observation_space = spaces.Box(low=-np.inf, 
                                             high=np.inf, 
-                                            shape=(4 * self.n_stocks * self.history_usage,))
+                                            shape=(4 * self.n_stocks * self.history_usage,)) # *4
 
         self.current_step: int = 0
         self.weights_list: list = []
@@ -83,7 +83,7 @@ class PortfolioEnvironment(gym.Env):
         observation_space  = self.return_data[start_idx:end_idx].T
 
         if observation_space.shape[1] < self.history_usage:
-            padding_shape = (self.n_stocks*4, self.history_usage - observation_space.shape[1])
+            padding_shape = (self.n_stocks*4, self.history_usage - observation_space.shape[1]) # n_stock*4
             padding = np.zeros(padding_shape, dtype=np.float32)
             observation_space = np.hstack([padding, observation_space])
         

@@ -12,8 +12,8 @@ from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
 from sklearn.model_selection import train_test_split
 
 from src.Optimization.Environment import PortfolioEnvironment as PorEnv
-from src.Optimization.NeuralNet import CustomNeuralNet as CusNN
-from src.Optimization.NeuralNet import CustomSACPolicy as CSACP
+from src.Optimization.NeuralNet import CustomCNNExtractor 
+from src.Optimization.NeuralNet import CustomSACPolicy
 import torch
 from torch import nn
 
@@ -60,20 +60,39 @@ class RL_Model():
                            objective=self.objective,
                            esg_compliancy=self.esg_compliancy
                            )
-        
-        model = SAC(
-            policy="MlpPolicy",
-            env=train_env,
-            gamma=0.9,
-            learning_rate=0.0004,
-            ent_coef=0.35,
-            batch_size=256,
-            train_freq=(64, "step"),
-            gradient_steps=64,
-            buffer_size=100_000,
-            verbose=1,
-        ).learn(self.total_timesteps)
 
+        n_stocks = len(self.esg_data)
+        history_usage = self.history_usage
+
+        policy_kwargs = dict(
+            features_extractor_class=CustomCNNExtractor,
+            features_extractor_kwargs=dict(
+                n_stocks=n_stocks,
+                history_usage=history_usage
+            ),
+            # activation_fn=nn.ReLU,
+            # net_arch=dict(pi=[256, 256], qf=[256, 256])
+        )
+
+        model = SAC(
+            CustomSACPolicy,
+            train_env,
+            policy_kwargs=policy_kwargs,
+            verbose=1,
+            learning_rate=3e-4,
+            buffer_size=70000,
+            learning_starts=10000,
+            batch_size=256,
+            tau=0.005,
+            gamma=0.99,
+            ent_coef='auto',
+            target_update_interval=1,
+            train_freq=(1, "episode"),
+            gradient_steps=-1,
+            use_sde=True
+        )
+        
+        model.learn(total_timesteps=self.total_timesteps)
         self.model = model
 
 
@@ -94,10 +113,8 @@ class RL_Model():
         while not finished: 
             action, _ = self.model.predict(obs, deterministic=True)
 
-            # weights = np.exp(action+1e-8)
-            # weights = weights / (np.sum(weights))
-            weights = (action+1)/2
-            weights = weights/np.sum(weights)
+            weights = np.exp(action+1e-9)
+            weights = weights / np.sum(weights)
 
             obs, reward, terminated, truncated, info = test_env.step(weights)
             finished = terminated or truncated
