@@ -8,6 +8,8 @@ from stable_baselines3.common.vec_env import DummyVecEnv
 from torch.optim import Adam
 from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
 
+# from stable_baselines3.sac import LnCnnPolicy as LnCnnPolicy
+
 
 from sklearn.model_selection import train_test_split
 
@@ -61,35 +63,51 @@ class RL_Model():
                            esg_compliancy=self.esg_compliancy
                            )
 
-        n_stocks = len(self.esg_data)
-        history_usage = self.history_usage
+        # n_stocks = len(self.esg_data)
+        # history_usage = self.history_usage
 
-        policy_kwargs = dict(
-            features_extractor_class=CustomCNNExtractor,
-            features_extractor_kwargs=dict(
-                n_stocks=n_stocks,
-                history_usage=history_usage
-            ),
-            # activation_fn=nn.ReLU,
-            # net_arch=dict(pi=[256, 256], qf=[256, 256])
-        )
+        # policy_kwargs = dict(
+        #     features_extractor_class=CustomCNNExtractor,
+        #     features_extractor_kwargs=dict(
+        #         n_stocks=n_stocks,
+        #         history_usage=history_usage
+        #     ),
 
+        # )
+
+        # model = SAC(
+        #     CustomSACPolicy,
+        #     train_env,
+        #     policy_kwargs=policy_kwargs,
+        #     verbose=1,
+        #     learning_rate=3e-4,
+        #     buffer_size=70000,
+        #     learning_starts=10000,
+        #     batch_size=256,
+        #     tau=0.005,
+        #     gamma=0.99,
+        #     ent_coef='auto',
+        #     target_update_interval=1,
+        #     train_freq=(1, "episode"),
+        #     gradient_steps=-1,
+        #     use_sde=True
+        # )
         model = SAC(
-            CustomSACPolicy,
-            train_env,
-            policy_kwargs=policy_kwargs,
+            policy="MlpPolicy",
+            env=train_env,
             verbose=1,
-            learning_rate=3e-4,
+            learning_rate=0.0003,          # Slower learning for more exploration
             buffer_size=70000,
-            learning_starts=10000,
-            batch_size=256,
+            learning_starts=20000,         # Longer random-action phase
+            batch_size=128,                # Smaller batches = more noisy updates
             tau=0.005,
             gamma=0.99,
-            ent_coef='auto',
+            ent_coef="auto",               # Let SAC tune entropy for max exploration
             target_update_interval=1,
-            train_freq=(1, "episode"),
-            gradient_steps=-1,
-            use_sde=True
+            train_freq=(24, "episode"),
+            gradient_steps=12,
+            use_sde=True,                  # State-Dependent Exploration
+            sde_sample_freq=64,            # Resample noise more often
         )
         
         model.learn(total_timesteps=self.total_timesteps)
@@ -115,6 +133,8 @@ class RL_Model():
 
             weights = np.exp(action+1e-9)
             weights = weights / np.sum(weights)
+            # weights = ((action+1e-8)+1) / 2
+            # weights = weights / np.sum(weights)
 
             obs, reward, terminated, truncated, info = test_env.step(weights)
             finished = terminated or truncated

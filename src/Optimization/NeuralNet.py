@@ -34,13 +34,14 @@ class CustomCNNExtractor(BaseFeaturesExtractor):
         
         # Feature processing
         self.feature_net = nn.Sequential(
-            nn.Linear(self.flattened_size, 512),
-            nn.LayerNorm(512),
-            nn.ReLU(),
+            nn.Linear(self.flattened_size, 1024),
+            nn.LayerNorm(1024),
+            nn.LeakyReLU(),
             nn.Dropout(0.5),
-            
-            nn.Linear(512, self.features_dim),
+
+            nn.Linear(1024, self.features_dim),
             nn.LayerNorm(self.features_dim),
+            nn.Softmax(),
             nn.Dropout(0.5)
         )
     
