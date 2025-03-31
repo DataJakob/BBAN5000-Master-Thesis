@@ -119,7 +119,7 @@ class GenerateResult():
             port_sel_prod = [np.prod(port_sel[i]+1) for i in range(len(port_sel))]
 
             active_return = np.cumprod([port_sel_prod[i]*port_all_prod[i] for i in range(self.n_optimizations)])
-            average_esg = [exper_w[i]@self.esg_data for i in range(self.n_optimizations)]
+            average_esg = [np.abs(exper_w[i])@self.esg_data for i in range(self.n_optimizations)]
 
             self.store_values(dataset, 
                               port_all, port_sel, 
@@ -132,7 +132,6 @@ class GenerateResult():
                              active_return,
                              exper_returns, bench_returns,
                              average_esg)
-            # if dataset == 0:
-            #     print(self.exper_analysis["return"])
+
         print("----Analysis completed succesfully----")
 

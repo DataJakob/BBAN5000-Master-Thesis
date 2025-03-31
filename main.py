@@ -7,7 +7,7 @@ from src.Optimization.Markowitz_PT import MarkowitzPT as MPT
 
 from src.Optimization.Environment import PortfolioEnvironment as PorEnv
 from src.Optimization.RLModelCompilation import RL_Model as RLM
-from src.Optimization.NeuralNet import CustomCNNExtractor 
+# from src.Optimization.NeuralNet import CustomCNNExtractor 
 
 from src.Result.Menchero_OGA import MencheroOGA as MOGA
 from src.Result.IndPortResults import GenerateResult as GR
@@ -19,7 +19,7 @@ import time
 start_time = time.time()
 """------------------------------------------------"""
 # Define necessary non-fixed variables
-trading_n = 400
+trading_n = 200
 history_usage = 504
 n_sectors = 6
 n_stocks_per_sector = 4
@@ -66,7 +66,7 @@ for i in range(len(objectives)):
                         objective=objectives[i],
                         history_usage=history_usage_RL,
                         rolling_reward_window=rolling_reward_window,
-                        total_timesteps=3000,
+                        total_timesteps=1000,
                         esg_compliancy=esg_compliancy[i],
                         )
     reinforcement.train_model()

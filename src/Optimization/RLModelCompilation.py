@@ -14,10 +14,15 @@ from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
 from sklearn.model_selection import train_test_split
 
 from src.Optimization.Environment import PortfolioEnvironment as PorEnv
-from src.Optimization.NeuralNet import CustomCNNExtractor 
-from src.Optimization.NeuralNet import CustomSACPolicy
+from src.Optimization.NeuralNet import TradingFeatureExtractor 
+from src.Optimization.NeuralNet import LSTMPPOPolicy
 import torch
 from torch import nn
+
+from stable_baselines3.common.callbacks import BaseCallback
+from stable_baselines3.common.callbacks import BaseCallback
+from stable_baselines3.common.callbacks import EvalCallback, ProgressBarCallback
+
 
 
 
@@ -63,54 +68,43 @@ class RL_Model():
                            esg_compliancy=self.esg_compliancy
                            )
 
-        # n_stocks = len(self.esg_data)
-        # history_usage = self.history_usage
-
-        # policy_kwargs = dict(
-        #     features_extractor_class=CustomCNNExtractor,
-        #     features_extractor_kwargs=dict(
-        #         n_stocks=n_stocks,
-        #         history_usage=history_usage
-        #     ),
-
-        # )
-
-        # model = SAC(
-        #     CustomSACPolicy,
-        #     train_env,
-        #     policy_kwargs=policy_kwargs,
-        #     verbose=1,
-        #     learning_rate=3e-4,
-        #     buffer_size=70000,
-        #     learning_starts=10000,
-        #     batch_size=256,
-        #     tau=0.005,
-        #     gamma=0.99,
-        #     ent_coef='auto',
-        #     target_update_interval=1,
-        #     train_freq=(1, "episode"),
-        #     gradient_steps=-1,
-        #     use_sde=True
-        # )
         model = SAC(
             policy="MlpPolicy",
             env=train_env,
-            verbose=1,
-            learning_rate=0.0003,          # Slower learning for more exploration
-            buffer_size=70000,
-            learning_starts=20000,         # Longer random-action phase
-            batch_size=128,                # Smaller batches = more noisy updates
-            tau=0.005,
-            gamma=0.99,
-            ent_coef="auto",               # Let SAC tune entropy for max exploration
-            target_update_interval=1,
-            train_freq=(24, "episode"),
-            gradient_steps=12,
-            use_sde=True,                  # State-Dependent Exploration
-            sde_sample_freq=64,            # Resample noise more often
+            verbose=2,
+            # Exploration parameters
+            ent_coef="auto",
+            target_entropy="auto",
+            use_sde=True,
+            sde_sample_freq=64,
+            # Policy network settings
+            policy_kwargs={
+                "log_std_init": -1.5,  # More initial exploration
+                "net_arch": [256, 256],
+                "use_expln": True  # Better for bounded actions
+            },
+            # Learning parameters
+            learning_rate=3e-4,
+            buffer_size=100_000,
+            batch_size=256,
+            tau=0.01,
+            gamma=0.95
         )
-        
-        model.learn(total_timesteps=self.total_timesteps)
+        # model = PPO(
+        #     policy=LSTMPPOPolicy,
+        #     env=train_env,
+        #     learning_rate=3e-4,
+        #     n_steps=2048,
+        #     batch_size=64,
+        # )
+
+
+  
+        from stable_baselines3.common.callbacks import BaseCallback
+        import time
+
+
+        model.learn(total_timesteps=self.total_timesteps,progress_bar=True)#, verbose=1 )
         self.model = model
 
 
@@ -133,8 +127,14 @@ class RL_Model():
 
             weights = np.exp(action+1e-9)
             weights = weights / np.sum(weights)
+
             # weights = ((action+1e-8)+1) / 2
             # weights = weights / np.sum(weights)
+
+            # Allow shorting
+            # weights = action / (np.sum(np.abs(action)) + 1e-8)  # Normalize absolute values
+
+            # weights = action / (np.sum(action)+1e-8)
 
             obs, reward, terminated, truncated, info = test_env.step(weights)
             finished = terminated or truncated

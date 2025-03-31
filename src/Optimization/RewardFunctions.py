@@ -95,8 +95,8 @@ def return_ratio(return_array):
     """
     doc string
     """
-    reward = (np.cumprod(return_array+1)-1)[-1]
-    # reward = return_array[-1]
+    # reward = (np.cumprod(return_array+1)-1)[-1]
+    reward = return_array[-1]
 
     return reward
 

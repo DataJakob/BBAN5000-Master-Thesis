@@ -43,7 +43,7 @@ class PortfolioEnvironment(gym.Env):
                                        shape=(self.n_stocks,),)
         self.observation_space = spaces.Box(low=-np.inf, 
                                             high=np.inf, 
-                                            shape=(4 * self.n_stocks, self.history_usage,)) # *4
+                                            shape=(self.n_stocks*4* self.history_usage,)) # *4
 
         self.current_step: int = 0
         self.weights_list: list = []
@@ -80,18 +80,15 @@ class PortfolioEnvironment(gym.Env):
         start_idx = max(0, self.current_step -self.history_usage)
         end_idx = self.current_step
 
-        observation_space  = self.return_data[start_idx:end_idx].T
+        observed_data = pd.DataFrame(self.return_data[start_idx:end_idx, :])
+        padded_array = np.array(observed_data).T.flatten()
 
-        if observation_space.shape[1] < self.history_usage:
-            padding_shape = (self.n_stocks*4, self.history_usage - observation_space.shape[1]) # n_stock*4
-            padding = np.zeros(padding_shape, dtype=np.float32)
-            observation_space = np.hstack([padding, observation_space])
-        
-        # Debug step
-        # if self.current_step % 200 == 0:
-        #     print("observation space shape: ", pd.DataFrame(observation_space).shape)
+        if observed_data.shape[0] < self.history_usage:
+            pad = pd.DataFrame(np.array([np.zeros(self.history_usage - observed_data.shape[0]) for i in range(96)])) # Num features
+            padded_df = pd.concat([pad.T, observed_data]).reset_index(drop=True)
+            padded_array = np.array(padded_df).T.flatten()
 
-        return observation_space.flatten().astype(np.float32)
+        return padded_array
 
 
 
