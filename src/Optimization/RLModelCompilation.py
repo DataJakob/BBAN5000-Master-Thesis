@@ -17,6 +17,7 @@ from src.Optimization.NeuralNet import CustomNeuralNet as CusNN
 from src.Optimization.NeuralNet import CustomSACPolicy as CSACP
 import torch
 from torch import nn
+import scipy.special
 
 
 
@@ -73,26 +74,26 @@ class RL_Model():
             train_freq=(64, "step"),
             gradient_steps=128,
             buffer_size=100_000,
-             tensorboard_log="./logs/",
    #         policy_delay=2,
             verbose=1,
-        ).learn(self.total_timesteps, log_interval=10)
+        ).learn(self.total_timesteps)
 
         self.model = model
 
         obs, info = train_env.reset()
         weights_history_t = []
         reward_history_t = []
-        q_history = []
         finished = False
 
         while not finished: 
-            action, _ = model.predict(obs, deterministic=True)
+            action, _ = model.predict(obs, deterministic=False)
+
+            #weights_t = scipy.special.softmax(action)
 
             weights_t = (action+1) / 2
             weights_t /= np.sum(weights_t)
 
-            obs, reward, terminated, truncated, info = train_env.step(action)
+            obs, reward, terminated, truncated, info = train_env.step(weights_t)
             finished = terminated or truncated
 
 
@@ -121,9 +122,9 @@ class RL_Model():
                            esg_compliancy=self.esg_compliancy
                            )
 
-
-
+        
         obs, additional_info = test_env.reset()
+        self.model.policy.eval()
         weights_history = []
         reward_history = []
         finished = False
@@ -132,8 +133,11 @@ class RL_Model():
         while not finished: 
             action, _ = self.model.predict(obs, deterministic=True)
 
+
+            #weights = scipy.special.softmax(action)
+
             weights = (action+1) / 2
-            weights /= np.sum(weights)
+            weights /= np.sum(weights) 
 
             obs, reward, terminated, truncated, info = test_env.step(weights)
             finished = terminated or truncated
