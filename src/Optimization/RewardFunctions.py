@@ -2,92 +2,146 @@ import numpy as np
 
 
 
-def sharpe_ratio(return_array: np.array):
+def sharpe_ratio(return_array: np.array, min_obs=3):
     """
     doc string
     """
-    rolling_reward_window = len(return_array)
-
-    annualized_mean_return = np.mean(return_array) * (252*2/rolling_reward_window)
-    annualized_std_return = (np.std(return_array) + 1e-8) * np.sqrt(252*2/rolling_reward_window)
-
-    ratio = annualized_mean_return / (annualized_std_return if annualized_std_return != 0 else 1)
-
-    return ratio
-
-
-
-def sortino_ratio(return_array: np.array):
-    """
-    doc string
-    """
-    rolling_reward_window = len(return_array)
-    annualized_mean_return = np.mean(return_array) * (252*2/rolling_reward_window)
+    n = len(return_array)
     
-    downside_risk = np.sqrt(np.mean(np.square(np.minimum(return_array, 0))))
-    annualized_downside_risk = downside_risk * np.sqrt(252*2 / rolling_reward_window)
+    # Return 0 if not enough observations
+    if n < min_obs:
+        return 0.0
+    
+    # Calculate excess returns
+    excess_returns = return_array 
+    
+    # Calculate mean and stddev
+    mean = np.mean(excess_returns)
+    stddev = np.std(excess_returns, ddof=1)  # Sample standard deviation
+    
+    # Avoid division by zero or extreme values
+    if stddev < 1e-5:
+        return 0.0
+    
+    # Annualize the sharpe ratio (bidaily returns * 365/2 periods per year)
+    sharpe = mean / stddev 
+    
+    # Cap extreme values to reasonable range [-3, 3]
+    sharpe = np.clip(sharpe, -3.0, 3.0)
+    
+    return sharpe
 
-    ratio = annualized_mean_return / (annualized_downside_risk if annualized_downside_risk != 0 else 1)
 
-    return ratio
+
+def sortino_ratio(return_array: np.array, periods_per_year: int = 504) -> float:
+    """
+    Calculate annualized Sortino ratio with robust numerical handling
+    
+    Args:
+        return_array: Array of arithmetic returns
+        periods_per_year: Number of periods in a year (default 504 for 2x daily)
+        
+    Returns:
+        float: Sortino ratio (0.0 for invalid cases)
+    """
+    # Input validation
+    if not isinstance(return_array, np.ndarray):
+        return 0.0
+        
+    return_array = return_array[~np.isnan(return_array)]  # Remove NaNs
+    
+    if len(return_array) < 2:
+        return 0.0
+    
+    # Calculate mean return with stability checks
+    mean_return = np.mean(return_array)
+    if np.isnan(mean_return) or np.isinf(mean_return):
+        return 0.0
+    
+    # Handle downside returns
+    downside_returns = return_array[return_array < 0]
+    
+    # Case 1: No downside returns
+    if len(downside_returns) == 0:
+        return 1000.0 if mean_return > 0 else 0.0  # Large finite value instead of inf
+    
+    # Case 2: All downside returns are zero (edge case)
+    if np.all(downside_returns == 0):
+        return 0.0
+    
+    # Calculate downside volatility with multiple safeguards
+    try:
+        downside_std = np.std(downside_returns, ddof=1)
+        
+        # Additional stability checks
+        if np.isnan(downside_std) or np.isinf(downside_std):
+            return 0.0
+            
+        downside_std = max(downside_std, 1e-8)  # Prevent division by zero
+        
+        # Annualize metrics
+        annualized_mean = mean_return * periods_per_year
+        annualized_downside = downside_std * np.sqrt(periods_per_year)
+        
+        ratio = annualized_mean / annualized_downside
+        
+        # Final sanity check
+        if np.isnan(ratio) or np.isinf(ratio):
+            return 0.0
+            
+        return float(ratio)
+        
+    except Exception as e:
+        print(f"Sortino ratio calculation error: {str(e)}")
+        return 0.0
+
 
 
 
 def calculate_drawdown(return_array):
-
-    if len(return_array) == 0 or np.all(return_array == 0):
-        return 0.005
-
-    with np.errstate(divide='ignore', invalid='ignore'):
-        cum_returns = np.cumprod(return_array + 1) - 1
-        diff_returns = np.diff(cum_returns)
-
-    drawdown_list = []
-    individual_dd = 0
-
-    for i in range(len(diff_returns)):
-        if diff_returns[i] < 0:
-            individual_dd += diff_returns[i]
-        else:
-            if individual_dd != 0:
-                drawdown_list.append(individual_dd)
-            individual_dd = 0
-
-        if i == len(diff_returns)-1 and individual_dd != 0:
-            drawdown_list.append(individual_dd)
-
-    sorted_drawdowns = bravo = np.sort(drawdown_list)[::-1]
-
-    if len(sorted_drawdowns) > 10:
-        sorted_drawdowns = sorted_drawdowns[:-int(0.1*sorted_drawdowns)]
-    elif len(bravo) >= 2:
-        sorted_drawdowns = sorted_drawdowns[:-1]
-    else: 
-        None
+    """
+    doc string
+    """
+    if len(return_array) == 0:
+        return 0.0
     
-    if not drawdown_list:
-        return 0.005
+    wealth_index = np.cumprod(1 + return_array)
     
-    adjusted_mean_drawdown = np.mean(np.abs(sorted_drawdowns)) + 0.005
-
-    return adjusted_mean_drawdown
-
+    previous_peaks = np.maximum.accumulate(wealth_index)
+    
+    drawdowns = (wealth_index - previous_peaks) / previous_peaks
+    
+    return np.min(drawdowns)  # Maximum drawdown (most negative)
 
 
 def sterling_ratio(return_array):
     """
     doc string
     """
-    if len(return_array) == 0 or np.all(return_array == 0):
+    if len(return_array) < 2:
         return 0.0
-    with np.errstate(divide='ignore', invalid='ignore'):
-        period_return = (np.cumprod(return_array + 1) - 1)[-1]
-
-    drawdown = calculate_drawdown(return_array)
-
-    ratio = period_return / drawdown
-
-    return ratio
+    
+    periods_per_year = 504
+    
+    # Annualized return
+    annualized_return = np.mean(return_array) * periods_per_year
+    
+    # Calculate drawdowns
+    wealth_index = np.cumprod(1 + return_array)
+    previous_peaks = np.maximum.accumulate(wealth_index)
+    drawdowns = (wealth_index - previous_peaks) / previous_peaks
+    
+    # Get largest 3 drawdowns and average them
+    if len(drawdowns) > 0:
+        largest_drawdowns = np.sort(drawdowns)[:min(3, len(drawdowns))]
+        avg_drawdown = np.mean(largest_drawdowns)
+    else:
+        avg_drawdown = 0.0
+    
+    if avg_drawdown >= 0:  # No drawdown occurred
+        return np.inf if annualized_return > 0 else 0.0
+    
+    return annualized_return / abs(avg_drawdown)
 
 
 
@@ -95,19 +149,18 @@ def return_ratio(return_array):
     """
     doc string
     """
-    # reward = (np.cumprod(return_array+1)-1)[-1]
-    reward = return_array[-1]
-
+    if return_array[-1] >= 0:
+        reward = return_array[-1]*100
+    else:
+        reward = return_array[-1] * 100
     return reward
-
 
 
 def penalise_reward(reward, esg_score):
     """
     doc string 
     """
-    penalty = 0.3 * ((reward/100) * (esg_score*2.5))   
-
+    penalty = 0.3 * ((reward/100) * ((esg_score/100)*2.5))   
     penalised_reward = reward - penalty     
 
     return penalised_reward

@@ -43,7 +43,7 @@ class PortfolioEnvironment(gym.Env):
                                        shape=(self.n_stocks,),)
         self.observation_space = spaces.Box(low=-np.inf, 
                                             high=np.inf, 
-                                            shape=(self.n_stocks*4* self.history_usage,)) # *4
+                                            shape=(self.n_stocks*1* self.history_usage,)) # *4
 
         self.current_step: int = 0
         self.weights_list: list = []
@@ -77,15 +77,24 @@ class PortfolioEnvironment(gym.Env):
         """
         doc string
         """
-        start_idx = max(0, self.current_step -self.history_usage)
-        end_idx = self.current_step
+        # Get one step ahead in observations
+        if self.current_step < self.history_usage:
+            start_idx = max(0, self.current_step -self.history_usage)
+        else:
+            start_idx = max(0, self.current_step - self.history_usage) + 1
+        end_idx = self.current_step +1
 
+        # 
         observed_data = pd.DataFrame(self.return_data[start_idx:end_idx, :])
         padded_array = np.array(observed_data).T.flatten()
 
         if observed_data.shape[0] < self.history_usage:
-            pad = pd.DataFrame(np.array([np.zeros(self.history_usage - observed_data.shape[0]) for i in range(96)])) # Num features
+            pad = pd.DataFrame(np.array([np.zeros(self.history_usage - observed_data.shape[0]) for i in range(24)])) # Num features
             padded_df = pd.concat([pad.T, observed_data]).reset_index(drop=True)
+            padded_array = np.array(padded_df).T.flatten()
+        elif observed_data.shape[0] == self.history_usage:
+            pad = pd.DataFrame(np.array([np.zeros(self.history_usage - observed_data.shape[0]) for i in range(24)])) # Num features
+            padded_df = pd.concat([observed_data,pad.T]).reset_index(drop=True)
             padded_array = np.array(padded_df).T.flatten()
 
         return padded_array
@@ -102,23 +111,14 @@ class PortfolioEnvironment(gym.Env):
         else:
             current_weights = action
         self.weights_list.append(current_weights)
-
-        # # Debug step
-        # print(current_weights)
         
-        # Find current weights and multiply with weights
         # Variables for (early) stopping
         terminated = self.current_step >= len(self.return_data)-1
         truncated = False
 
         # Add return if possible, (edge case if-statement)
         if not terminated:
-            
             current_returns = self.return_data[self.current_step +1,:self.n_stocks]
-
-            # # Debug step
-            # print(current_returns)
-
             portfolio_return = 0.0
             if self.current_step +1 < len(self.return_data):
                 portfolio_return = np.dot(current_weights, current_returns)
@@ -155,6 +155,14 @@ class PortfolioEnvironment(gym.Env):
             
         # Returns the next observation space for the algo to use
         observation = self.get_observation()
+
+        # if (self.current_step >= 2) and (current_reward[-1]>0):
+        #     new_reward *= 6
+        #     if new_reward > 0:
+        #         new_reward *= 6
+
+        if self.current_step %300 == 0:
+            print(new_reward)            
 
         return observation, new_reward, terminated, truncated, {}
         

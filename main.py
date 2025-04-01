@@ -45,52 +45,54 @@ esg_scores = np.array([36.6, 35.3, 17.9, 18,
                 19.8, 13.8, 18.1, 19, 
                 17.2, 14, 17.2, 19.5, 
                 19.7, 21.2, 26.8, 19.3])
-# """------------------------------------------------"""
+"""------------------------------------------------"""
 # # Retrieve data from yf API: y-m-d
 # data = DatRet(ticker_df, "2013-01-01", "2024-12-31", history_usage_RL=history_usage_RL)
 # # In function below, set log=True to check for data availability
 # data.retrieve_data()
-# # """------------------------------------------------"""
-# Generate benchmark weights thorugh MPT using Sharpe ratio
-benchmark = MPT(history_usage, trading_n)
-# IMPORTANT: In order to see  the effect of the weights, algo exclude last observation from optimization
-benchmark.frequency_optimizing()
-# # """------------------------------------------------"""
+"""------------------------------------------------"""
+# # Generate benchmark weights thorugh MPT using Sharpe ratio
+# benchmark = MPT(history_usage, trading_n)
+# # IMPORTANT: In order to see  the effect of the weights, algo exclude last observation from optimization
+# benchmark.frequency_optimizing()
+"""------------------------------------------------"""
 # objectives = ["Return", "Sharpe", "Sortino", "Sterling", "Return", "Sharpe", "Sortino", "Sterling"]
 # esg_compliancy = [True, True, True, True, False, False, False, False]
-# objectives = ["Return"]
-# esg_compliancy = [False]
+# objectives = ["Sterling", "Return", "Sharpe", "Sortino", "Sterling"]
+# esg_compliancy = [True, False, False, False, False]
+objectives = ["Return"]
+esg_compliancy = [False]
 
-# for i in range(len(objectives)):
-#     reinforcement = RLM(esg_scores, 
-#                         objective=objectives[i],
-#                         history_usage=history_usage_RL,
-#                         rolling_reward_window=rolling_reward_window,
-#                         total_timesteps=1000,
-#                         esg_compliancy=esg_compliancy[i],
-#                         )
-#     reinforcement.train_model()
-#     reinforcement.test_model()
-# """------------------------------------------------"""
-# paths = ["Return_esg_True", "Sharpe_esg_True",
-#          "Sortino_esg_True","Sterling_esg_True",
-#          "Return_esg_False", "Sharpe_esg_False",
-#          "Sortino_esg_False","Sterling_esg_False",]
+for i in range(len(objectives)):
+    reinforcement = RLM(esg_scores, 
+                        objective=objectives[i],
+                        history_usage=history_usage_RL,
+                        rolling_reward_window=rolling_reward_window,
+                        total_timesteps=15000,
+                        esg_compliancy=esg_compliancy[i],
+                        )
+    reinforcement.train_model()
+    reinforcement.test_model()
+"""------------------------------------------------"""
+paths = ["Return_esg_True", "Sharpe_esg_True",
+         "Sortino_esg_True","Sterling_esg_True",
+         "Return_esg_False", "Sharpe_esg_False",
+         "Sortino_esg_False","Sterling_esg_False",]
 
-# analysis_list = []
-# for i in range(len(paths)):
-#     att_anal = GR(paths[i],
-#             n_sectors, n_stocks_per_sector,
-#             trading_n,
-#             esg_scores, 
-#             ticker_df.columns)
-#     att_anal.friple_frequency_analysis()
-#     analysis_list.append(att_anal)
-# """------------------------------------------------"""
-# theta = RC(analysis_list, trading_n)
-# theta.convey_results()
-# """------------------------------------------------"""
+analysis_list = []
+for i in range(len(paths)):
+    att_anal = GR(paths[i],
+            n_sectors, n_stocks_per_sector,
+            trading_n,
+            esg_scores, 
+            ticker_df.columns)
+    att_anal.friple_frequency_analysis()
+    analysis_list.append(att_anal)
+"""------------------------------------------------"""
+theta = RC(analysis_list, trading_n)
+theta.convey_results()
+"""------------------------------------------------"""
 
 
-# elapsed_time = time.time() - start_time
-# print(f"Elapsed time: {elapsed_time:.4f} seconds")
+elapsed_time = time.time() - start_time
+print(f"Elapsed time: {elapsed_time:.4f} seconds")
