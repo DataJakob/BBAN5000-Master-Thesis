@@ -60,7 +60,7 @@ class PortfolioEnvironment(gym.Env):
         """
         super().reset(seed=seed)
 
-        self.current_step = self.history_usage
+        self.current_step = 0
         self.weights = np.repeat(1/self.n_stocks, self.n_stocks)
         self.portfolio_returns = []
 
@@ -84,10 +84,10 @@ class PortfolioEnvironment(gym.Env):
         observation_space  = self.return_data[start_idx:end_idx].T
 
 
-        # if observation_space.shape[1] < self.history_usage:
-        #     padding_shape = (self.n_stocks*1, self.history_usage - observation_space.shape[1])
-        #     padding = np.zeros(padding_shape, dtype=np.float32)
-        #     observation_space = np.hstack([padding, observation_space])
+        if observation_space.shape[1] < self.history_usage:
+            padding_shape = (self.n_stocks*1, self.history_usage - observation_space.shape[1])
+            padding = np.zeros(padding_shape, dtype=np.float32)
+            observation_space = np.hstack([padding, observation_space])
         
         return observation_space.flatten().astype(np.float32)
 

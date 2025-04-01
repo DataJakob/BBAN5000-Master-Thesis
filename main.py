@@ -23,7 +23,7 @@ n_sectors = 6
 n_stocks_per_sector = 4
 
 # For RL algorithm
-history_usage_RL = 64
+history_usage_RL = 60
 rolling_reward_window = 64
 """------------------------------------------------"""
 # Defining stock pool
