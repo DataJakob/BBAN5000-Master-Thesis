@@ -41,7 +41,14 @@ class RL_Model():
         self.total_timesteps = total_timesteps
         self.esg_compliancy = esg_compliancy
         
-    
+    def set_seeds(self, seed=42):
+        """
+        doc string
+        """
+        np.random.seed(seed)
+        torch.manual_seed(seed)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
 
     def train_model(self):
         """
