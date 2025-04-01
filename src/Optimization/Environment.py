@@ -3,6 +3,7 @@ import pandas as pd
 
 import gymnasium as gym
 from gymnasium import spaces
+from stable_baselines3.common.vec_env import VecNormalize
 
 from src.Optimization.RewardFunctions import (
     sharpe_ratio,
@@ -43,7 +44,7 @@ class PortfolioEnvironment(gym.Env):
                                        shape=(self.n_stocks,),)
         self.observation_space = spaces.Box(low=-np.inf, 
                                             high=np.inf, 
-                                            shape=(4 * self.n_stocks * self.history_usage,))
+                                            shape=(1 * self.n_stocks * self.history_usage,))
 
         self.current_step: int = 0
         self.weights_list: list = []
@@ -59,7 +60,7 @@ class PortfolioEnvironment(gym.Env):
         """
         super().reset(seed=seed)
 
-        self.current_step = 0
+        self.current_step = self.history_usage
         self.weights = np.repeat(1/self.n_stocks, self.n_stocks)
         self.portfolio_returns = []
 
@@ -82,10 +83,11 @@ class PortfolioEnvironment(gym.Env):
 
         observation_space  = self.return_data[start_idx:end_idx].T
 
-        if observation_space.shape[1] < self.history_usage:
-            padding_shape = (self.n_stocks*4, self.history_usage - observation_space.shape[1])
-            padding = np.zeros(padding_shape, dtype=np.float32)
-            observation_space = np.hstack([padding, observation_space])
+
+        # if observation_space.shape[1] < self.history_usage:
+        #     padding_shape = (self.n_stocks*1, self.history_usage - observation_space.shape[1])
+        #     padding = np.zeros(padding_shape, dtype=np.float32)
+        #     observation_space = np.hstack([padding, observation_space])
         
         return observation_space.flatten().astype(np.float32)
 
@@ -145,6 +147,7 @@ class PortfolioEnvironment(gym.Env):
         # Add ESG penalty
         if self.esg_compliancy == True:
             new_reward = penalise_reward(new_reward, esg_score)
+        
     
         # New step
         self.current_step += 1

@@ -26,7 +26,7 @@ class RL_Model():
     Doc string 
     """
     def __init__(self, esg_data, objective, history_usage, rolling_reward_window, total_timesteps, esg_compliancy: bool):
-        self.stock_info = pd.read_csv("Data/Input/Total.csv")
+        self.stock_info = pd.read_csv("Data/Input/StockReturns.csv")
         self.esg_data = esg_data
 
         self.train_data = None
@@ -63,34 +63,27 @@ class RL_Model():
                            )
         
 
-        # def mlp_with_dropout(dim_input, dim_output):
-        #     return [
-        #         dict(pi=[64, 64], vf=[64, 64])  # pi = actor, vf = critic
-        #     ]
-
-        # # Define policy_kwargs with Dropout
-        # policy_kwargs = dict(
-        #     net_arch=mlp_with_dropout,  # Custom architecture with dropout
-        #     activation_fn=torch.nn.ReLU,  # Standard activation function
-        #     dropout=0.2  # Dropout rate (this will be passed to the policy network)
-        # )
         model = SAC(
             policy="MlpPolicy",
             # policy_kwargs=policy_kwargs,
             env=train_env,
             gamma=0.99,
-            ent_coef="auto",
+            ent_coef='auto',
             batch_size=64,
             train_freq=(64, "step"),
-            gradient_steps=64,
+            gradient_steps=128,
             buffer_size=100_000,
+             tensorboard_log="./logs/",
+   #         policy_delay=2,
             verbose=1,
-        ).learn(self.total_timesteps)
+        ).learn(self.total_timesteps, log_interval=10)
 
         self.model = model
 
         obs, info = train_env.reset()
         weights_history_t = []
+        reward_history_t = []
+        q_history = []
         finished = False
 
         while not finished: 
@@ -102,10 +95,16 @@ class RL_Model():
             obs, reward, terminated, truncated, info = train_env.step(action)
             finished = terminated or truncated
 
+
+            reward_history_t.append(reward)
             weights_history_t.append(weights_t)
 
         weight_df_t  = pd.DataFrame(weights_history_t)
         weight_df_t.to_csv("Data/RL_weights_t_"+self.objective+"_esg_"+str(self.esg_compliancy)+".csv", 
+                          index=False)
+        
+        reward_df_t  = pd.DataFrame(reward_history_t)
+        reward_df_t.to_csv("Data/RL_reward_t_"+self.objective+"_esg_"+str(self.esg_compliancy)+".csv", 
                           index=False)
         
         mean_reward, std_reward = evaluate_policy(model, train_env, n_eval_episodes=10)
@@ -126,6 +125,7 @@ class RL_Model():
 
         obs, additional_info = test_env.reset()
         weights_history = []
+        reward_history = []
         finished = False
 
 
@@ -138,6 +138,7 @@ class RL_Model():
             obs, reward, terminated, truncated, info = test_env.step(weights)
             finished = terminated or truncated
 
+            reward_history.append(reward)
             weights_history.append(weights)
 
             
@@ -145,8 +146,10 @@ class RL_Model():
         print(f"mean_reward:{mean_reward:.2f} +/- {std_reward:.2f}")
 
 
-
-
         weight_df  = pd.DataFrame(weights_history)
         weight_df.to_csv("Data/RL_weights_"+self.objective+"_esg_"+str(self.esg_compliancy)+".csv", 
+                          index=False)
+        
+        reward_df  = pd.DataFrame(reward_history)
+        reward_df.to_csv("Data/RL_reward_"+self.objective+"_esg_"+str(self.esg_compliancy)+".csv", 
                           index=False)

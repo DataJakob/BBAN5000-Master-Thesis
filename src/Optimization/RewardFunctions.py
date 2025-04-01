@@ -22,10 +22,10 @@ def sortino_ratio(return_array: np.array):
     doc string
     """
     rolling_reward_window = len(return_array)
-    annualized_mean_return = np.mean(return_array) * (252*2/rolling_reward_window)
+    annualized_mean_return = np.mean(return_array) 
     
     downside_risk = np.sqrt(np.mean(np.square(np.minimum(return_array, 0))))
-    annualized_downside_risk = downside_risk * np.sqrt(252*2 / rolling_reward_window)
+    annualized_downside_risk = downside_risk 
 
     ratio = annualized_mean_return / (annualized_downside_risk if annualized_downside_risk != 0 else 1)
 
@@ -105,8 +105,8 @@ def penalise_reward(reward, esg_score):
     """
     doc string 
     """
-    penalty = 0.3 * ((reward/100) * (esg_score*2.5))   
+    penalty = 0.3 * (esg_score*2.5)  
 
     penalised_reward = reward - penalty     
-
+    #print('Pen_rew:', penalised_reward) 
     return penalised_reward
