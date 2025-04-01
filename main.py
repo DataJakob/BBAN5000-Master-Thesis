@@ -25,7 +25,7 @@ n_sectors = 6
 n_stocks_per_sector = 4
 
 # For RL algorithm
-history_usage_RL = 75
+history_usage_RL = 30
 rolling_reward_window = 10
 """------------------------------------------------"""
 # Defining stock pool
@@ -68,7 +68,7 @@ for i in range(len(objectives)):
                         objective=objectives[i],
                         history_usage=history_usage_RL,
                         rolling_reward_window=rolling_reward_window,
-                        total_timesteps=15000,
+                        total_timesteps=1500,
                         esg_compliancy=esg_compliancy[i],
                         )
     reinforcement.train_model()

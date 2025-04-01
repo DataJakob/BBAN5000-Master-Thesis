@@ -159,9 +159,9 @@ class RL_Model():
             },
             learning_rate=linear_schedule(3e-4),
             buffer_size=60_000,
-            batch_size=128,
+            batch_size=256,
             tau=0.005,
-            gamma=0.99,
+            gamma=0.9,
             ent_coef='auto',
             target_entropy='auto'
         )

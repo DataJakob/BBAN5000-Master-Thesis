@@ -43,7 +43,7 @@ class PortfolioEnvironment(gym.Env):
                                        shape=(self.n_stocks,),)
         self.observation_space = spaces.Box(low=-np.inf, 
                                             high=np.inf, 
-                                            shape=(self.n_stocks*1* self.history_usage,)) # *4
+                                            shape=(self.n_stocks * 1 * self.history_usage,)) # *4
 
         self.current_step: int = 0
         self.weights_list: list = []
@@ -81,22 +81,24 @@ class PortfolioEnvironment(gym.Env):
         if self.current_step < self.history_usage:
             start_idx = max(0, self.current_step -self.history_usage)
         else:
-            start_idx = max(0, self.current_step - self.history_usage) + 1
-        end_idx = self.current_step +1
-
-        # 
+            start_idx = max(0, self.current_step - self.history_usage) + 2
+        end_idx = self.current_step +2
+ 
         observed_data = pd.DataFrame(self.return_data[start_idx:end_idx, :])
         padded_array = np.array(observed_data).T.flatten()
 
-        if observed_data.shape[0] < self.history_usage:
-            pad = pd.DataFrame(np.array([np.zeros(self.history_usage - observed_data.shape[0]) for i in range(24)])) # Num features
+        if self.current_step  < self.history_usage -2:
+            print(self.current_step)
+            pad = pd.DataFrame(np.array([np.zeros(self.history_usage - observed_data.shape[0]) for _ in range(24)])) # Num features
             padded_df = pd.concat([pad.T, observed_data]).reset_index(drop=True)
             padded_array = np.array(padded_df).T.flatten()
-        elif observed_data.shape[0] == self.history_usage:
-            pad = pd.DataFrame(np.array([np.zeros(self.history_usage - observed_data.shape[0]) for i in range(24)])) # Num features
+
+        if self.current_step >= len(self.return_data)-2:
+            print("brukes jeg?")
+            pad = pd.DataFrame(np.array([np.zeros(self.history_usage - observed_data.shape[0]) for _ in range(24)])) # Num features
             padded_df = pd.concat([observed_data,pad.T]).reset_index(drop=True)
             padded_array = np.array(padded_df).T.flatten()
-
+        print(padded_array.shape)
         return padded_array
 
 

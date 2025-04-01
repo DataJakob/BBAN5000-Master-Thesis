@@ -149,10 +149,12 @@ def return_ratio(return_array):
     """
     doc string
     """
-    if return_array[-1] >= 0:
-        reward = return_array[-1]*100
-    else:
-        reward = return_array[-1] * 100
+    # if return_array[-1] >= 0:
+    #     reward = return_array[-1]*100
+    # else:
+    #     reward = return_array[-1] * 100
+    reward = (np.cumprod(return_array+1)-1)[-1]
+    
     return reward
 
 
