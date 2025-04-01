@@ -23,8 +23,8 @@ n_sectors = 6
 n_stocks_per_sector = 4
 
 # For RL algorithm
-history_usage_RL = 50
-rolling_reward_window = 50
+history_usage_RL = 100
+rolling_reward_window = 100
 """------------------------------------------------"""
 # Defining stock pool
 ticker_df =  pd.DataFrame()
@@ -64,7 +64,7 @@ for i in range(len(objectives)):
                         objective=objectives[i],
                         history_usage=history_usage_RL,
                         rolling_reward_window=rolling_reward_window,
-                        total_timesteps=1000,
+                        total_timesteps=20000,
                         esg_compliancy=esg_compliancy[i],
                         )
     reinforcement.train_model()
