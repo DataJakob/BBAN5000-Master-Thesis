@@ -145,7 +145,8 @@ class RL_Model():
             
             return func
 
-                # Model setup
+
+
         model = SAC(
             policy="MlpPolicy",
             env=train_env,
@@ -156,19 +157,19 @@ class RL_Model():
             policy_kwargs={
                 "net_arch": [256, 256],
                 "use_sde": True,
-                "log_std_init":-2
+                "log_std_init":-2,
             },
 
             learning_rate=linear_schedule(3e-4),
-            tau=0.005,
-            gamma=0.99,
+            tau=0.0002,
+            gamma=0.95,
 
-            buffer_size=60_000,
+            buffer_size=6_000,
             batch_size=64,
             gradient_steps=128,
-            train_freq=(64, "step"),
+            train_freq=(50, "step"),
 
-            ent_coef='auto',
+            ent_coef=0.05,
             target_entropy='auto'
         )
 
@@ -239,7 +240,7 @@ class RL_Model():
         }
         
         results["weights"].to_csv(
-            f"Data/RL_weights_{self.objective}_esg_{self.esg_compliancy}.csv",
+            f"Data/TestPredictions/RL_weights_{self.objective}_esg_{self.esg_compliancy}.csv",
             index=False
         )
         

@@ -16,14 +16,9 @@ def sharpe_ratio(return_array: np.array,
     mean = np.mean(return_array)
     stddev = np.std(return_array) 
     
-    # Avoid division by zero or extreme values
-    if stddev < 1e-5:
-        return mean/1
-    
-    sharpe =(mean / stddev) 
-    # if sharpe < 0:
-    #     return -1.0
-    sharpe_clipped = np.clip(sharpe, -3.0, 3.0) * 5
+    sharpe = mean / stddev 
+
+    sharpe_clipped = np.clip(sharpe, -3.0, 3.0) * 2
 
     return sharpe_clipped
 
@@ -42,10 +37,10 @@ def sortino_ratio(return_array: np.array,
     mean = np.mean(return_array) 
     
     downside_risk = np.sqrt(np.mean(np.square(np.minimum(return_array, 0))))
-    downside_risk += 1
+    downside_risk += 0
 
     sortino = mean / (downside_risk if downside_risk >= 1e-5 else 1)
-    sortino_clipped = np.clip(sortino,  -3,3) * 60
+    sortino_clipped = np.clip(sortino,  -3,3) * 5
 
     return sortino_clipped
 

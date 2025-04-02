@@ -43,7 +43,7 @@ class PortfolioEnvironment(gym.Env):
                                        shape=(self.n_stocks,),)
         self.observation_space = spaces.Box(low=-np.inf, 
                                             high=np.inf, 
-                                            shape=(self.n_stocks * 1 * self.history_usage,)) # *4
+                                            shape=(self.n_stocks * 1, self.history_usage,)) # *4
 
         self.current_step: int = 0
         self.weights_list: list = []
@@ -59,7 +59,7 @@ class PortfolioEnvironment(gym.Env):
         """
         super().reset(seed=seed)
 
-        self.current_step = self.history_usage
+        self.current_step = 0
         self.weights_list = []
         self.returns_list = []
 
@@ -94,7 +94,7 @@ class PortfolioEnvironment(gym.Env):
         else:
             padded_df = actual_data
 
-        return_array = np.array(padded_df.iloc[-self.history_usage:,:]).flatten()
+        return_array = np.array(padded_df.iloc[-self.history_usage:,:]).T#.flatten()
 
         return return_array
 
