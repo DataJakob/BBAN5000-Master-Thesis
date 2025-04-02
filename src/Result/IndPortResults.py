@@ -18,7 +18,7 @@ class GenerateResult():
         self.n_sectors = n_sectors
         self.n_stock = n_stock_per_sector
         # All optimizations weights are to be multiplied with returns for time t+1
-        self.n_optimizations = n_optimizations - 1
+        self.n_optimizations = n_optimizations 
         self.sector_names = sector_names
         
 
@@ -44,21 +44,14 @@ class GenerateResult():
         ax[0,0].plot(br, color="grey", label="Benchmark")
         ax[0,0].plot(er, color="blue", label="Experimental")
         ax[0,0].plot(ar, color="green", label= "Geometric active return")
-        ax[0,0].scatter(x=np.linspace(0,self.n_optimizations-1,self.n_optimizations), y =(br*ar), 
+        ax[0,0].scatter(x=np.linspace(0,self.n_optimizations-1, self.n_optimizations), y=(br*ar), 
                 s=5, color="black", label="Validity Control")
+        ax[0,0].axhline(y=1, color="red")
         ax[0,0].set_ylabel("Return")
         ax[0,0].set_xlabel("Trading times")
         ax[0,0].set_title('General Portfolio Performance')
         ax[0,0].legend()
 
-        # ax[0,1].plot(er, color="blue", label="Experimental")
-        # ax[0,1].scatter(x=np.linspace(0,self.n_optimizations-1,self.n_optimizations), y =(br*ar), 
-        #                 s=5, color="black", label="Validity Control")
-        # ax[0,1].set_ylabel("Return")
-        # ax[0,1].set_xlabel("Trading times")
-        # ax[0,1].set_title('Benchmark * Active return')
-        # ax[0,1].legend()
-    
         data_arrays = [pap, psp]
         data_labels = ["Allocation", "Selection"]
         ax[0,1].boxplot(data_arrays, tick_labels=data_labels)
@@ -98,40 +91,37 @@ class GenerateResult():
 
 
     def friple_frequency_analysis(self):
-        objective_df = [self.exper_w]
-        objective_storage = [self.path]
-        bench_w = [self.bench_w.iloc[-self.n_optimizations+time] for time in range(self.n_optimizations)]
-        returns = np.array([self.returns.iloc[-self.n_optimizations+time] for time in range(self.n_optimizations)])+1
+        # objective_df = self.exper_w
+        # objective_storage = self.path
+        # bench_w = [self.bench_w.iloc[-self.n_optimizations+time] for time in range(self.n_optimizations)]
+        returns = self.returns.iloc[-self.n_optimizations:].reset_index(drop=True)
+        exper_w = self.exper_w.iloc[-self.n_optimizations-1:-1].reset_index(drop=True)
+        bench_w = self.bench_w
+        analysis = MOGA(exper_w, n_sectors=self.n_sectors, n_stocks_per_sector=self.n_stock)
+        analysis.frequency_analyser()
 
-        len(objective_df)
-        for dataset in range(0,len(objective_df),1):
-            exper_w = [objective_df[dataset].iloc[-self.n_optimizations+time-1,:] for time in range(self.n_optimizations)]
-            # analysis = MOGA(None, None,None)
-            analysis = MOGA(objective_df[dataset], n_sectors=self.n_sectors, n_stocks_per_sector=self.n_stock)
-            analysis.frequency_analyser()
+        exper_returns = np.cumprod([np.dot(exper_w.iloc[i], returns.iloc[i])+1 for i in range(self.n_optimizations)])
+        bench_returns = np.cumprod([np.dot(bench_w.iloc[i], returns.iloc[i])+1 for i in range(self.n_optimizations)])
 
-            exper_returns = np.cumprod([np.dot(exper_w[i],returns[i]) for i in range(len(exper_w))])
-            bench_returns = np.cumprod([np.dot(bench_w[i],returns[i]) for i in range(len(bench_w))])
+        port_all = analysis.allocation_effects.reshape(-1,self.n_sectors)
+        port_all_prod = [np.prod(port_all[i]+1) for i in range(len(port_all))]
+        port_sel = analysis.selection_effects.reshape(-1,self.n_sectors)
+        port_sel_prod = [np.prod(port_sel[i]+1) for i in range(len(port_sel))]
 
-            port_all = analysis.allocation_effects.reshape(-1,self.n_sectors)
-            port_all_prod = [np.prod(port_all[i]+1) for i in range(len(port_all))]
-            port_sel = analysis.selection_effects.reshape(-1,self.n_sectors)
-            port_sel_prod = [np.prod(port_sel[i]+1) for i in range(len(port_sel))]
+        active_return = np.cumprod([port_sel_prod[i]*port_all_prod[i] for i in range(self.n_optimizations)])
+        average_esg = [np.abs(exper_w.iloc[i])@self.esg_data for i in range(self.n_optimizations)]
 
-            active_return = np.cumprod([port_sel_prod[i]*port_all_prod[i] for i in range(self.n_optimizations)])
-            average_esg = [np.abs(exper_w[i])@self.esg_data for i in range(self.n_optimizations)]
-
-            self.store_values(dataset, 
-                              port_all, port_sel, 
-                              active_return, 
-                              exper_returns, bench_returns, 
-                              average_esg)
-            
-            self.plot_values(objective_storage[dataset],
-                             port_all, port_sel,
-                             active_return,
-                             exper_returns, bench_returns,
-                             average_esg)
+        self.store_values(self.exper_w, 
+                            port_all, port_sel, 
+                            active_return, 
+                            exper_returns, bench_returns, 
+                            average_esg)
+        
+        self.plot_values(self.path,
+                            port_all, port_sel,
+                            active_return,
+                            exper_returns, bench_returns,
+                            average_esg)
 
         print("----Analysis completed succesfully----")
 

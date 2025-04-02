@@ -39,12 +39,12 @@ class MencheroOGA():
             benchmark_w (list): A nested list of benchmark weights corresponding to stocks over multiple time periods.
             experimental_w (list): A nested list of experimental/portfolio weights corresponding to stocks over multiple time periods.
         """
-        self.benchmark_w =  pd.read_csv("Data/MPT_weights.csv")
-        self.experimental_w = experimental.iloc[:-1]
+        self.bench_w =  pd.read_csv("Data/MPT_weights.csv")         # Correct data (from MPT.py)
+        self.exper_w = experimental                                 # Correct data (from IPR.py)
         self.returns = pd.read_csv("Data/Input/StockReturns.csv")
 
         # All optimizations weights are to be multiplied with returns for time t+1
-        self.n_optimizations: int = self.benchmark_w.shape[0] - 1
+        self.n_optimizations: int = self.bench_w.shape[0]
         
         self.n_sectors = n_sectors
         self.n_stocks = n_stocks_per_sector
@@ -111,15 +111,15 @@ class MencheroOGA():
             - Updates the 'allocation_effects' and 'selection_effects' attributes of the class.
         """
 
-        relevant_return_list = [self.returns.iloc[-(self.n_optimizations)+time] for time in range(self.n_optimizations)]
-        relevant_exper_list = [self.experimental_w.iloc[-self.n_optimizations+time,:] for time in range(self.n_optimizations)]
+        # Contains only the last n-trading observations
+        relevant_return_list = self.returns.iloc[-self.n_optimizations:].reset_index(drop=True) 
 
         allocation_list = []
         selection_list = []
         for time in range(self.n_optimizations):
-            effects = self.analyzer_at_time_t(relevant_return_list[time], 
-                                              np.array(relevant_exper_list[time]),
-                                              np.array(self.benchmark_w.iloc[time]))
+            effects = self.analyzer_at_time_t(relevant_return_list.iloc[time], 
+                                              np.array(self.exper_w.iloc[time]),
+                                              np.array(self.bench_w.iloc[time]))
 
             selection_list.append(effects[0])
             allocation_list.append(effects[1])

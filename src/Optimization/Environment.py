@@ -38,7 +38,7 @@ class PortfolioEnvironment(gym.Env):
         self.objective: str = objective
         self.esg_compliancy: bool = esg_compliancy
 
-        self.action_space = spaces.Box(low=-1, 
+        self.action_space = spaces.Box(low=0, 
                                        high=1, 
                                        shape=(self.n_stocks,),)
         self.observation_space = spaces.Box(low=-np.inf, 
@@ -59,7 +59,7 @@ class PortfolioEnvironment(gym.Env):
         """
         super().reset(seed=seed)
 
-        self.current_step = 0
+        self.current_step = self.history_usage
         self.weights_list = []
         self.returns_list = []
 
@@ -78,28 +78,25 @@ class PortfolioEnvironment(gym.Env):
         doc string
         """
         # Get one step ahead in observations
-        if self.current_step < self.history_usage:
-            start_idx = max(0, self.current_step -self.history_usage)
+        start_idx = 0
+        end_idx = self.current_step + 1
+        maxlen = len(self.return_data)
+
+        actual_data = pd.DataFrame(self.return_data)
+        actual_data = actual_data.iloc[start_idx:end_idx, : ]
+
+        if self.current_step <= self.history_usage -1:
+            pad = pd.DataFrame(np.array([np.zeros(self.history_usage-actual_data.shape[0]) for _ in range(24)]))
+            padded_df = pd.concat([pad.T, actual_data]).reset_index(drop=True)
+        elif self.current_step >= (maxlen-1):
+            pad = pd.DataFrame(np.array([np.zeros(maxlen - self.current_step) for _ in range(24)]))
+            padded_df = pd.concat([actual_data, pad.T]).reset_index(drop=True)
         else:
-            start_idx = max(0, self.current_step - self.history_usage) + 2
-        end_idx = self.current_step +2
- 
-        observed_data = pd.DataFrame(self.return_data[start_idx:end_idx, :])
-        padded_array = np.array(observed_data).T.flatten()
+            padded_df = actual_data
 
-        if self.current_step  < self.history_usage -2:
-            print(self.current_step)
-            pad = pd.DataFrame(np.array([np.zeros(self.history_usage - observed_data.shape[0]) for _ in range(24)])) # Num features
-            padded_df = pd.concat([pad.T, observed_data]).reset_index(drop=True)
-            padded_array = np.array(padded_df).T.flatten()
+        return_array = np.array(padded_df.iloc[-self.history_usage:,:]).flatten()
 
-        if self.current_step >= len(self.return_data)-2:
-            print("brukes jeg?")
-            pad = pd.DataFrame(np.array([np.zeros(self.history_usage - observed_data.shape[0]) for _ in range(24)])) # Num features
-            padded_df = pd.concat([observed_data,pad.T]).reset_index(drop=True)
-            padded_array = np.array(padded_df).T.flatten()
-        print(padded_array.shape)
-        return padded_array
+        return return_array
 
 
 

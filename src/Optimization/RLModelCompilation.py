@@ -152,16 +152,22 @@ class RL_Model():
             device=self.device,
             verbose=1,
             tensorboard_log=self.log_dir,
+
             policy_kwargs={
                 "net_arch": [256, 256],
                 "use_sde": True,
                 "log_std_init":-2
             },
+
             learning_rate=linear_schedule(3e-4),
-            buffer_size=60_000,
-            batch_size=256,
             tau=0.005,
-            gamma=0.9,
+            gamma=0.99,
+
+            buffer_size=60_000,
+            batch_size=64,
+            gradient_steps=128,
+            train_freq=(64, "step"),
+
             ent_coef='auto',
             target_entropy='auto'
         )
@@ -182,6 +188,7 @@ class RL_Model():
 
 
     def test_model(self):
+        self.model.policy.eval()
         if not hasattr(self, 'eval_env'):
             test_data = self.stock_info.iloc[int(0.85*len(self.stock_info)):].reset_index(drop=True)
             test_env = self.create_envs(test_data, eval=True)
@@ -197,9 +204,14 @@ class RL_Model():
             action, _ = self.model.predict(obs, deterministic=True)
             
             # Softmax normalization
-            weights = np.exp(action - np.max(action))
-            weights = weights / (weights.sum() + 1e-8)
+            # weights = np.exp(action - np.max(action))
+            # weights = weights / (weights.sum() + 1e-8)
             
+            # Shorting normalization
+            # weights = action / (np.sum(np.abs(action))+1e-8)
+
+            weights = action / np.sum(action+1e-8)
+
             obs, reward, done, info = test_env.step(weights)
             
             # Remove middle dimension if exists
