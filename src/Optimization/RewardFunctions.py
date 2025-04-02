@@ -6,14 +6,10 @@ def sharpe_ratio(return_array: np.array):
     """
     doc string
     """
-   
 
-    annualized_mean_return = np.mean(return_array) 
-    annualized_std_return = (np.std(return_array) + 1e-8) 
+    ratio =  np.mean(return_array) / (np.std(return_array) + 1e-8)
 
-    ratio = annualized_mean_return / (annualized_std_return if annualized_std_return != 0 else 1)
-
-    return ratio
+    return ratio *3
 
 
 

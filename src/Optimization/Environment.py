@@ -46,7 +46,7 @@ class PortfolioEnvironment(gym.Env):
                                             high=np.inf, 
                                             shape=(1 * self.n_stocks * self.history_usage,))
 
-        self.current_step: int = self.history_usage
+        self.current_step: int = 0
         self.weights_list: list = []
         self.returns_list: list = []
 
@@ -60,7 +60,7 @@ class PortfolioEnvironment(gym.Env):
         """
         super().reset(seed=seed)
 
-        self.current_step = self.history_usage
+        self.current_step = 0
         self.weights = np.repeat(1/self.n_stocks, self.n_stocks)
         self.portfolio_returns = []
 
@@ -78,19 +78,26 @@ class PortfolioEnvironment(gym.Env):
         """
         doc string
         """
-        start_idx = max(0, self.current_step -self.history_usage)
-        end_idx = self.current_step
+        # Get one step ahead in observations
+        start_idx = 0
+        end_idx = self.current_step + 1
+        maxlen = len(self.return_data)
 
-        observation_space  = self.return_data[start_idx:end_idx].T
+        actual_data = pd.DataFrame(self.return_data)
+        actual_data = actual_data.iloc[start_idx:end_idx, : ]
 
+        if self.current_step <= self.history_usage -1:
+            pad = pd.DataFrame(np.array([np.zeros(self.history_usage-actual_data.shape[0]) for _ in range(24)]))
+            padded_df = pd.concat([pad.T, actual_data]).reset_index(drop=True)
+        elif self.current_step >= (maxlen-1):
+            pad = pd.DataFrame(np.array([np.zeros(maxlen - self.current_step) for _ in range(24)]))
+            padded_df = pd.concat([actual_data, pad.T]).reset_index(drop=True)
+        else:
+            padded_df = actual_data
 
-        # if observation_space.shape[1] < self.history_usage:
-        #     padding_shape = (self.n_stocks*1, self.history_usage - observation_space.shape[1])
-        #     padding = np.zeros(padding_shape, dtype=np.float32)
-        #     observation_space = np.hstack([padding, observation_space])
-        
-        return observation_space.flatten().astype(np.float32)
+        return_array = np.array(padded_df.iloc[-self.history_usage:,:]).flatten()
 
+        return return_array
 
 
     def step(self, action):
