@@ -73,15 +73,14 @@ class RL_Model():
 
         model = SAC(
             policy="MlpPolicy",
-            # policy_kwargs=policy_kwargs,
             env=train_env,
             gamma=0.99,
-            ent_coef='auto',
+            learning_rate=0.003,
+            ent_coef=2,
             batch_size=64,
             train_freq=(64, "step"),
-            gradient_steps=128,
+            gradient_steps=64,
             buffer_size=100_000,
-   #         policy_delay=2,
             verbose=1,
         ).learn(self.total_timesteps)
 

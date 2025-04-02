@@ -27,7 +27,7 @@ def sortino_ratio(return_array: np.array):
     downside_risk = np.sqrt(np.mean(np.square(np.minimum(return_array, 0))))
     downside_risk += 1
 
-    ratio = annualized_mean_return / (downside_risk)
+    ratio = annualized_mean_return / downside_risk
 
     return ratio
 
@@ -96,6 +96,7 @@ def return_ratio(return_array):
     doc string
     """
     reward = (np.cumprod(return_array+1)-1)[-1]
+ 
 
     return reward
 
@@ -107,6 +108,5 @@ def penalise_reward(reward, esg_score):
     """
     penalty = 0.3 * (esg_score) 
    
-
     penalised_reward = reward - penalty     
     return penalised_reward

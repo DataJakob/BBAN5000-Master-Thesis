@@ -56,7 +56,7 @@ esg_scores = np.array([36.6, 35.3, 17.9, 18,
 # # """------------------------------------------------"""
 # objectives = ["Return", "Sharpe", "Sortino", "Sterling", "Return", "Sharpe", "Sortino", "Sterling"]
 # esg_compliancy = [True, True, True, True, False, False, False, False]
-objectives = ["Sortino"]
+objectives = ["Return"]
 esg_compliancy = [True]
 
 for i in range(len(objectives)):
