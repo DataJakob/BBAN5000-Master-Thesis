@@ -9,7 +9,7 @@ def sharpe_ratio(return_array: np.array):
 
     ratio =  np.mean(return_array) / (np.std(return_array) + 1e-8)
 
-    return ratio *3
+    return ratio 
 
 
 
@@ -25,7 +25,7 @@ def sortino_ratio(return_array: np.array):
 
     ratio = annualized_mean_return / downside_risk
 
-    return ratio
+    return ratio*3
 
 
 
@@ -94,7 +94,7 @@ def return_ratio(return_array):
     reward = (np.cumprod(return_array+1)-1)[-1]
  
 
-    return reward
+    return reward*3
 
 
 

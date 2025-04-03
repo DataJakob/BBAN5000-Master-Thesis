@@ -49,7 +49,7 @@ class PortfolioEnvironment(gym.Env):
         self.current_step: int = 0
         self.weights_list: list = []
         self.returns_list: list = []
-
+        self.check = []
 
 
     def reset(self, seed=42):
@@ -59,6 +59,10 @@ class PortfolioEnvironment(gym.Env):
         Good, changing all non-fixed variables inside the environment
         """
         super().reset(seed=seed)
+        self._np_random, seed = gym.utils.seeding.np_random(seed)
+        np.random.seed(42)  # Set numpy seed
+        
+
 
         self.current_step = 0
         self.weights = np.repeat(1/self.n_stocks, self.n_stocks)
@@ -131,6 +135,7 @@ class PortfolioEnvironment(gym.Env):
         else:
             portfolio_return = 0.0
             self.returns_list.append(portfolio_return)
+        
 
         #Calculate ESG score for portfolio
         esg_score = np.dot(current_weights, self.esg_data)
@@ -153,16 +158,20 @@ class PortfolioEnvironment(gym.Env):
         
         # Add ESG penalty
         if self.esg_compliancy == True:
-            new_reward = penalise_reward(new_reward, esg_score)
+            final_reward = penalise_reward(new_reward, esg_score)
+        else:
+            final_reward = new_reward
         
-    
+        #print(f"Step: {self.current_step}, Objective: {self.objective}, Reward: {final_reward}, ESG:{self.esg_compliancy}")
+        self.check.append([current_weights, final_reward])
+        print(type(current_weights))
         # New step
         self.current_step += 1
             
         # Returns the next observation space for the algo to use
         next_window = self.get_observation()
 
-        return next_window, new_reward, terminated, truncated, {}
+        return next_window, final_reward, terminated, truncated, {}
         
 
 

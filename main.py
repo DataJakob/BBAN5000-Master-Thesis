@@ -23,8 +23,8 @@ n_sectors = 6
 n_stocks_per_sector = 4
 
 # For RL algorithm
-history_usage_RL = 80
-rolling_reward_window = 80
+history_usage_RL = 1
+rolling_reward_window = 10
 """------------------------------------------------"""
 # Defining stock pool
 ticker_df =  pd.DataFrame()
@@ -56,15 +56,15 @@ esg_scores = np.array([36.6, 35.3, 17.9, 18,
 # # """------------------------------------------------"""
 # objectives = ["Return", "Sharpe", "Sortino", "Sterling", "Return", "Sharpe", "Sortino", "Sterling"]
 # esg_compliancy = [True, True, True, True, False, False, False, False]
-objectives = ["Sharpe"]
-esg_compliancy = [True]
+objectives = ["Return", "Sortino"]
+esg_compliancy = [True, True]
 
 for i in range(len(objectives)):
     reinforcement = RLM(esg_scores, 
                         objective=objectives[i],
                         history_usage=history_usage_RL,
                         rolling_reward_window=rolling_reward_window,
-                        total_timesteps=2000,
+                        total_timesteps=10,
                         esg_compliancy=esg_compliancy[i],
                         )
     reinforcement.train_model()

@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import random
 
 from stable_baselines3 import SAC
 from stable_baselines3 import PPO
@@ -47,8 +48,13 @@ class RL_Model():
         """
         np.random.seed(seed)
         torch.manual_seed(seed)
+        random.seed(seed)
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
+
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed(seed)
+            torch.cuda.manual_seed_all(seed)  # For multi-GPU setups
 
     def train_model(self):
         """
@@ -69,18 +75,22 @@ class RL_Model():
                            objective=self.objective,
                            esg_compliancy=self.esg_compliancy
                            )
-        
+       
+        #train_env.seed(42)
+
 
         model = SAC(
             policy="MlpPolicy",
             env=train_env,
+            seed=42,
             gamma=0.99,
-            learning_rate=0.002,
+            learning_rate=0.001,
             ent_coef='auto_0.1',
-            batch_size=64,
+            batch_size=128,
             train_freq=(200, "step"),
             gradient_steps=64,
             buffer_size=100_000,
+            learning_starts=1000,
             verbose=1,
         ).learn(self.total_timesteps)
 
@@ -101,10 +111,12 @@ class RL_Model():
 
             obs, reward, terminated, truncated, info = train_env.step(weights_t)
             finished = terminated or truncated
-
-
+            
             reward_history_t.append(reward)
             weights_history_t.append(weights_t)
+
+        wack_df = pd.DataFrame(train_env.check)
+        wack_df.to_csv("myDF.csv", index=False)
 
         weight_df_t  = pd.DataFrame(weights_history_t)
         weight_df_t.to_csv("Data/RL_weights_t_"+self.objective+"_esg_"+str(self.esg_compliancy)+".csv", 
@@ -134,6 +146,7 @@ class RL_Model():
         weights_history = []
         reward_history = []
         finished = False
+        
 
 
         while not finished: 
@@ -143,7 +156,7 @@ class RL_Model():
             #weights = scipy.special.softmax(action)
 
             weights = (action+1) / 2
-            weights /= np.sum(weights) 
+            weights /= np.sum(weights)
 
             obs, reward, terminated, truncated, info = test_env.step(weights)
             finished = terminated or truncated
