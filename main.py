@@ -56,30 +56,29 @@ esg_scores = np.array([36.6, 35.3, 17.9, 18,
 # # IMPORTANT: In order to see  the effect of the weights, algo exclude last observation from optimization
 # benchmark.frequency_optimizing()
 """------------------------------------------------"""
-objectives = ["Return", "Sharpe", "Sortino", "Sterling", "Return", "Sharpe", "Sortino", "Sterling"]
-
-esg_compliancy = [True, True, True, True, False, False, False, False]
+# objectives = ["Return", "Sharpe", "Sortino", "Sterling", "Return", "Sharpe", "Sortino", "Sterling"]
+# esg_compliancy = [True, True, True, True, False, False, False, False]
 # # objectives = ["Sterling", "Return", "Sharpe", "Sortino", "Sterling"]
 # # esg_compliancy = [True, False, False, False, False]
-# objectives = ["Sharpe"]
-# esg_compliancy = [False]
+objectives = [ "Sharpe"]
+esg_compliancy = [ False]
 
 for i in range(len(objectives)):
     reinforcement = RLM(esg_scores, 
                         objective=objectives[i],
                         history_usage=history_usage_RL,
                         rolling_reward_window=rolling_reward_window,
-                        total_timesteps=40,
+                        total_timesteps=10,
                         esg_compliancy=esg_compliancy[i],
                         )
     reinforcement.train_model()
     reinforcement.test_model()
 """------------------------------------------------"""
-paths = ["Return_esg_True", "Sharpe_esg_True",
-         "Sortino_esg_True","Sterling_esg_True",
-         "Return_esg_False", "Sharpe_esg_False",
-         "Sortino_esg_False","Sterling_esg_False",]
-
+# paths = ["Return_esg_True", "Sharpe_esg_True",
+#          "Sortino_esg_True","Sterling_esg_True",
+#          "Return_esg_False", "Sharpe_esg_False",
+#          "Sortino_esg_False","Sterling_esg_False",]
+paths = ["Sharpe_esg_False"]
 analysis_list = []
 for i in range(len(paths)):
     att_anal = GR(paths[i],
@@ -90,8 +89,8 @@ for i in range(len(paths)):
     att_anal.friple_frequency_analysis()
     analysis_list.append(att_anal)
 """------------------------------------------------"""
-theta = RC(analysis_list, trading_n)
-theta.convey_results()
+# theta = RC(analysis_list, trading_n)
+# theta.convey_results()
 """------------------------------------------------"""
 
 

@@ -1,86 +1,88 @@
-from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 import torch
 import torch.nn as nn
+import numpy as np
 import gymnasium as gym
-from gym import spaces
-
-from stable_baselines3 import PPO
-from stable_baselines3.common.policies import ActorCriticPolicy
+from gymnasium import spaces
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
-import torch.nn as nn
 
 
+class PortfolioFeatureExtractor(BaseFeaturesExtractor):
+    def __init__(self, observation_space: gym.spaces.Box, n_stocks: int = 24):
+        """
+        Args:
+            observation_space: Flattened observation space (required by SB3)
+            n_stocks: Number of assets in portfolio
+        """
+        # Total flattened dim = 5 features * n_stocks
+        features_dim = 5 * n_stocks  
+        super().__init__(observation_space, features_dim=256)
+        
+        self.n_stocks = n_stocks
+        self.features_per_stock = 5  # Returns, Volume, RollingReturn, RollingVolatility, Weights
+        
+        # Define sub-networks for each feature type
+        self.returns_net = nn.Sequential(
+            nn.Linear(n_stocks, 64),
+            nn.ReLU(),
+            nn.LayerNorm(64)
+        )
+        self.volume_net = nn.Sequential(
+            nn.Linear(n_stocks, 64),
+            nn.ReLU(),
+            nn.LayerNorm(64)
+        )
+        self.rolling_ret_net = nn.Sequential(
+            nn.Linear(n_stocks, 64),
+            nn.ReLU(),
+            nn.LayerNorm(64)
+        )
+        self.rolling_vol_net = nn.Sequential(
+            nn.Linear(n_stocks, 64),
+            nn.ReLU(),
+            nn.LayerNorm(64)
+        )
+        self.weights_net = nn.Sequential(
+            nn.Linear(n_stocks, 64),
+            nn.ReLU(),
+            nn.LayerNorm(64)
+        )
+        
+        # Final combining network
+        self.combine_net = nn.Sequential(
+            nn.Linear(64 * 5, 256),  # 5 features * 64 dim each
+            nn.ReLU(),
+            nn.LayerNorm(256)
+        )
 
-class TradingFeatureExtractor(BaseFeaturesExtractor):
-    def __init__(self, observation_space, features_dim=256):
-        super().__init__(observation_space, features_dim)
-        self.n_stocks = 24
-        self.other_features = 72
-        self.seq_len = 75
+    def forward(self, observations: torch.Tensor) -> torch.Tensor:
+        """
+        Process flattened observations through feature-specific networks.
         
-        # LSTM for returns (outputs 64-dim features)
-        self.returns_lstm = nn.LSTM(
-            input_size=self.n_stocks,
-            hidden_size=64,  # Reduced to allow concatenation
-            batch_first=True
-        )
+        Args:
+            observations: Flattened tensor of shape (batch_size, n_stocks*5)
+            
+        Returns:
+            Combined features tensor of shape (batch_size, 256)
+        """
+        batch_size = observations.shape[0]
         
-        # Dense network for other features (outputs 64-dim)
-        self.other_features_net = nn.Sequential(
-            nn.Linear(self.other_features, 64),  # Changed to output 64
-            nn.LayerNorm(64),
-            nn.LeakyReLU()
-        )
+        # Reshape to (batch_size, n_stocks, 5)
+        obs_reshaped = observations.view(batch_size, self.n_stocks, self.features_per_stock)
         
-        # Transformer config (input must match d_model=128)
-        encoder_layer = nn.TransformerEncoderLayer(
-            d_model=128,  # Must match concatenated dimension
-            nhead=4,
-            dim_feedforward=256
-        )
-        self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=1)
+        # Process each feature type (shape: [batch_size, 64])
+        returns_features = self.returns_net(obs_reshaped[..., 0])  # Returns are first feature
+        volume_features = self.volume_net(obs_reshaped[..., 1])
+        rolling_ret_features = self.rolling_ret_net(obs_reshaped[..., 2])
+        rolling_vol_features = self.rolling_vol_net(obs_reshaped[..., 3])
+        weights_features = self.weights_net(obs_reshaped[..., 4])  # Weights are last feature
         
-        # Final projection
-        self.fc = nn.Sequential(
-            nn.Linear(128, features_dim),
-            nn.LayerNorm(features_dim)
-        )
-
-    def forward(self, x):
-        # x shape: (batch, 96, 75)
-        batch_size = x.shape[0]
-        
-        # Process returns (temporal)
-        returns = x[:, :self.n_stocks, :]  # (batch, 24, 75)
-        returns = returns.permute(0, 2, 1)  # (batch, 75, 24)
-        lstm_out, _ = self.returns_lstm(returns)  # (batch, 75, 64)
-        
-        # Process other features (static)
-        other = x[:, self.n_stocks:, :]  # (batch, 72, 75)
-        other = other.mean(dim=2)  # (batch, 72)
-        other = self.other_features_net(other)  # (batch, 64)
-        
-        # Combine features (64 + 64 = 128)
+        # Combine all features
         combined = torch.cat([
-            lstm_out[:, -1, :],  # Last timestep (batch, 64)
-            other  # (batch, 64)
-        ], dim=1)  # (batch, 128)
+            returns_features,
+            volume_features,
+            rolling_ret_features,
+            rolling_vol_features,
+            weights_features
+        ], dim=1)
         
-        # Transformer expects (seq_len, batch, dim)
-        transformer_in = combined.unsqueeze(0)  # (1, batch, 128)
-        transformer_out = self.transformer(transformer_in)  # (1, batch, 128)
-        
-        return self.fc(transformer_out[0])  # (batch, 256)
-    
-
-class LSTMPPOPolicy(ActorCriticPolicy):
-    def __init__(self, *args, **kwargs):
-        super().__init__(
-            *args,
-            features_extractor_class=TradingFeatureExtractor,
-            features_extractor_kwargs={},
-            net_arch=[dict(pi=[256, 256], vf=[256, 256])],
-            activation_fn=nn.LeakyReLU,
-            **kwargs
-        )
-
+        return self.combine_net(combined)

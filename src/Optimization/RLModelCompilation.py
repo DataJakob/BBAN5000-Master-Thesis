@@ -12,8 +12,8 @@ from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize, VecCheck
 from sklearn.model_selection import train_test_split
 
 from src.Optimization.Environment import PortfolioEnvironment as PorEnv
-from src.Optimization.NeuralNet import TradingFeatureExtractor 
-from src.Optimization.NeuralNet import LSTMPPOPolicy
+from src.Optimization.NeuralNet import PortfolioFeatureExtractor 
+# from src.Optimization.NeuralNet import CustomSACPolicy
 
 import torch
 from torch import nn
@@ -84,7 +84,6 @@ class RL_Model():
             env = PorEnv(
                 history_usage=self.history_usage,
                 rolling_reward_window=self.rolling_reward_window,
-                return_data=data,
                 esg_data=self.esg_data,
                 objective=self.objective,
                 esg_compliancy=self.esg_compliancy
@@ -95,8 +94,8 @@ class RL_Model():
         
         env = make_vec_env(make_env, n_envs=4 if not eval else 1, 
                           seed=self.seed, vec_env_cls=DummyVecEnv)
-        env = VecCheckNan(env)
-        env = VecNormalize(env, norm_obs=True, norm_reward=True)
+        # env = VecCheckNan(env)
+        # env = VecNormalize(env, norm_obs=True, norm_reward=True)
         return env
 
 
@@ -125,53 +124,67 @@ class RL_Model():
             render=False
         )
 
+        from stable_baselines3.common.noise import OrnsteinUhlenbeckActionNoise
 
-        def linear_schedule(initial_value: float): #-> Callable[[float], float]:
-            """
-            Linear learning rate schedule.
-            
-            Args:
-                initial_value: Initial learning rate
-                
-            Returns:
-                schedule: A function that takes progress remaining (1 to 0) 
-                        and returns the learning rate
-            """
-            def func(progress_remaining: float) -> float:
-                """
-                Progress decreases from 1 (beginning) to 0 (end)
-                """
-                return progress_remaining * initial_value
-            
-            return func
-
-
+        n_actions = train_env.action_space.shape[0]
+        action_noise = OrnsteinUhlenbeckActionNoise(
+            mean=np.zeros(n_actions),
+            sigma=0.2 * np.ones(n_actions),
+            theta=0.15,
+            dt=1e-2
+        )
+        policy_kwargs = {
+            "features_extractor_class": PortfolioFeatureExtractor,
+            "features_extractor_kwargs": {
+                "n_stocks": 24  # Your number of assets
+            },
+            "net_arch": {  # More explicit architecture definition
+                "pi": [256, 256],  # Policy network
+                "qf": [256, 256]   # Q-value network
+            },
+            "activation_fn": nn.ReLU,
+            "optimizer_class": torch.optim.AdamW,
+            "optimizer_kwargs": {"weight_decay": 1e-5}  # Optional L2 regularization
+        }
 
         model = SAC(
             policy="MlpPolicy",
             env=train_env,
-            device=self.device,
+            learning_rate=3e-4,
+            buffer_size=100000,
+            batch_size=256,
+            ent_coef="auto",
+            target_entropy="auto",
+            policy_kwargs=policy_kwargs,
             verbose=1,
-            tensorboard_log=self.log_dir,
-
-            policy_kwargs={
-                "net_arch": [256, 256],
-                "use_sde": True,
-                "log_std_init":-2,
-            },
-
-            learning_rate=linear_schedule(3e-4),
-            tau=0.0002,
-            gamma=0.95,
-
-            buffer_size=6_000,
-            batch_size=64,
-            gradient_steps=128,
-            train_freq=(50, "step"),
-
-            ent_coef=0.05,
-            target_entropy='auto'
+            tensorboard_log="./logs/",
+            action_noise=action_noise,
         )
+        # model = SAC(
+        #     policy="MlpPolicy",
+        #     env=train_env,
+        #     device=self.device,
+        #     verbose=1,
+        #     tensorboard_log=self.log_dir,
+
+        #     policy_kwargs={
+        #         "net_arch": [256, 256],
+        #         "use_sde": True,
+        #         "log_std_init":-2,
+        #     },
+
+        #     learning_rate=linear_schedule(3e-4),
+        #     tau=0.0002,
+        #     gamma=0.95,
+
+        #     buffer_size=6_000,
+        #     batch_size=64,
+        #     gradient_steps=128,
+        #     train_freq=(50, "step"),
+
+        #     ent_coef=0.05,
+        #     target_entropy='auto'
+        # )
 
 
         # Training
@@ -179,7 +192,8 @@ class RL_Model():
             total_timesteps=self.total_timesteps,
             callback=CallbackList([checkpoint_callback, eval_callback]),
             progress_bar=True,
-            tb_log_name=f"{self.objective}_esg_{self.esg_compliancy}"
+            # tb_log_name=f"{self.objective}_esg_{self.esg_compliancy}"
+
         )
         
         self.model = model
@@ -202,7 +216,7 @@ class RL_Model():
         done = False
         
         while not done:
-            action, _ = self.model.predict(obs, deterministic=True)
+            action, _ = self.model.predict(obs, deterministic=False)
             
             # Softmax normalization
             # weights = np.exp(action - np.max(action))

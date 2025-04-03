@@ -13,6 +13,8 @@ from src.Optimization.RewardFunctions import (
     penalise_reward
 )
 
+from gymnasium.wrappers import FlattenObservation
+
 
 
 class PortfolioEnvironment(gym.Env):
@@ -21,7 +23,7 @@ class PortfolioEnvironment(gym.Env):
     """
     def __init__(self,
                  history_usage, rolling_reward_window,
-                 return_data, esg_data,
+                 esg_data,
                  objective, esg_compliancy):
         super().__init__()
         """
@@ -29,7 +31,12 @@ class PortfolioEnvironment(gym.Env):
 
         Good, initialize all variables with values 
         """
-        self.return_data = return_data.values
+        self.return_data = pd.read_csv("Data/Input/StockReturns.csv").values
+        self.volume_data = pd.read_csv("Data/Input/Volume.csv").values
+        self.rollingret_data = pd.read_csv("Data/Input/RollingRet.csv").values
+        self.rollingvol_data = pd.read_csv("Data/Input/RollingVol.csv").values
+
+
         self.esg_data: np.array = esg_data
         self.history_usage: int = history_usage
         self.rolling_reward_window: int = rolling_reward_window
@@ -41,9 +48,32 @@ class PortfolioEnvironment(gym.Env):
         self.action_space = spaces.Box(low=0, 
                                        high=1, 
                                        shape=(self.n_stocks,),)
-        self.observation_space = spaces.Box(low=-np.inf, 
-                                            high=np.inf, 
-                                            shape=(self.n_stocks * 1, self.history_usage,)) # *4
+        self.observation_space_dict = spaces.Dict({
+            "Returns": gym.spaces.Box(
+                low=-np.inf, 
+                high=np.inf, 
+                shape=(self.n_stocks,)),
+            "Volume": gym.spaces.Box(
+                low=-np.inf,
+                high=np.inf,
+                shape=(self.n_stocks,)),
+            "RollingReturn": gym.spaces.Box(
+                low=-np.inf,
+                high=np.inf,
+                shape=(self.n_stocks, )),
+            "RollingVolatility": gym.spaces.Box(
+                low=-np.inf,
+                high=np.inf,
+                shape=(self.n_stocks, )),
+            "Weights": gym.spaces.Box(
+                low=-np.inf,
+                high=np.inf,
+                shape=(self.n_stocks, )),
+            })
+        self.observation_space = spaces.utils.flatten_space(self.observation_space_dict)
+
+
+
 
         self.current_step: int = 0
         self.weights_list: list = []
@@ -52,119 +82,76 @@ class PortfolioEnvironment(gym.Env):
 
 
     def reset(self, seed=42):
-        """
-        doc string
-
-        Good, changing all non-fixed variables inside the environment
-        """
         super().reset(seed=seed)
-
         self.current_step = 0
-        self.weights_list = []
-        self.returns_list = []
+        self.current_weights = [np.repeat(1/self.n_stocks, self.n_stocks)]
+        self.returns_history = []
+        
+        obs_dict = self._get_current_observation()
+        return self._flatten_observation(obs_dict), {}
 
-        observation = self.get_observation()
-        additional_info = {
-            "time_step": self.current_step,
-            "cumulative_geo_return": np.cumprod(self.returns_list)
+
+    def _get_current_observation(self) -> dict:
+        """Returns observation for current step only (not windows)"""
+        idx = min(self.current_step, len(self.return_data) - 1)
+
+        return {
+            "Returns": self.return_data[idx],
+            "Volume": self.volume_data[idx],
+            "RollingReturn": self.rollingret_data[idx],
+            "RollingVolatility": self.rollingvol_data[idx],
+            "Weights": self.current_weights
         }
 
-        return observation, additional_info
+    def _flatten_observation(self, obs_dict: dict) -> np.ndarray:
+        """Flatten dictionary observation to array"""
+        return spaces.utils.flatten(self.observation_space_dict, obs_dict)
 
-
-
-    def get_observation(self):
-        """
-        doc string
-        """
-        # Get one step ahead in observations
-        start_idx = 0
-        end_idx = self.current_step + 1
-        maxlen = len(self.return_data)
-
-        actual_data = pd.DataFrame(self.return_data)
-        actual_data = actual_data.iloc[start_idx:end_idx, : ]
-
-        if self.current_step <= self.history_usage -1:
-            pad = pd.DataFrame(np.array([np.zeros(self.history_usage-actual_data.shape[0]) for _ in range(24)]))
-            padded_df = pd.concat([pad.T, actual_data]).reset_index(drop=True)
-        elif self.current_step >= (maxlen-1):
-            pad = pd.DataFrame(np.array([np.zeros(maxlen - self.current_step) for _ in range(24)]))
-            padded_df = pd.concat([actual_data, pad.T]).reset_index(drop=True)
-        else:
-            padded_df = actual_data
-
-        return_array = np.array(padded_df.iloc[-self.history_usage:,:]).T#.flatten()
-
-        return return_array
 
 
 
     def step(self, action):
-        """
-        doc string
-        """
-        # Generate weights based on actions
-        if self.current_step == 0:
-            current_weights = np.repeat(1/self.n_stocks, self.n_stocks)
-        else:
-            current_weights = action
-        self.weights_list.append(current_weights)
-        
-        # Variables for (early) stopping
-        terminated = self.current_step >= len(self.return_data)-1
+        # Normalize weights to sum to 1
+        self.current_weights = np.clip(action, 0, 1)
+        self.current_weights /= np.sum(self.current_weights) + 1e-8
+
+        # Calculate portfolio return
+        terminated = self.current_step >= len(self.return_data) - 1
         truncated = False
-
-        # Add return if possible, (edge case if-statement)
+        
         if not terminated:
-            current_returns = self.return_data[self.current_step +1,:self.n_stocks]
-            portfolio_return = 0.0
-            if self.current_step +1 < len(self.return_data):
-                portfolio_return = np.dot(current_weights, current_returns)
-            self.returns_list.append(portfolio_return)
+            current_returns = self.return_data[self.current_step + 1]
+            portfolio_return = np.dot(self.current_weights, current_returns)
+            self.returns_history.append(portfolio_return)
         else:
-            portfolio_return = 0.0
-            self.returns_list.append(portfolio_return)
+            self.returns_history.append(0.0)
 
-        #Calculate ESG score for portfolio
-        esg_score = np.dot(current_weights, self.esg_data)
-
-        # Define rolling window for reward
-        if len(self.returns_list) < self.rolling_reward_window:
-            current_reward = np.array(self.returns_list)
-        else:
-            current_reward = np.array(self.returns_list[-self.rolling_reward_window:])
-
-        # Calcualte reward based on objective
+        # Calculate reward
+        reward_window = (self.returns_history[-self.rolling_reward_window:] 
+                        if len(self.returns_history) >= self.rolling_reward_window 
+                        else self.returns_history)
+        
         if self.objective == "Return":
-            new_reward = return_ratio(current_reward)
+            reward = return_ratio(reward_window)
         elif self.objective == "Sharpe":
-            new_reward = sharpe_ratio(current_reward)
+            reward = sharpe_ratio(reward_window)
         elif self.objective == "Sortino":
-            new_reward = sortino_ratio(current_reward)
+            reward = sortino_ratio(reward_window)
         else:
-            new_reward = sterling_ratio(current_reward)
-        
-        # Add ESG penalty
-        if self.esg_compliancy == True:
-            new_reward = penalise_reward(new_reward, esg_score)
-    
-        # New step
+            reward = sterling_ratio(reward_window)
+
+        # Apply ESG penalty if enabled
+        if self.esg_compliancy:
+            esg_score = np.dot(self.current_weights, self.esg_data)
+            reward = penalise_reward(reward, esg_score)
+
+        # Get next observation
         self.current_step += 1
-            
-        # Returns the next observation space for the algo to use
-        observation = self.get_observation()
+        obs_dict = self._get_current_observation()
+        flat_obs = self._flatten_observation(obs_dict)
+        print("Step:", self.current_step, ", Reward: ", reward, "weights: ", action )
 
-        # if (self.current_step >= 2) and (current_reward[-1]>0):
-        #     new_reward *= 6
-        #     if new_reward > 0:
-        #         new_reward *= 6
-
-        if self.current_step %300 == 0:
-            print(new_reward)            
-
-        return observation, new_reward, terminated, truncated, {}
-        
+        return flat_obs, reward, terminated, truncated, {}
 
 
     def render(self, mode="human"):

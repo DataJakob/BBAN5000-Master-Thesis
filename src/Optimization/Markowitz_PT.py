@@ -103,6 +103,6 @@ class MarkowitzPT():
         self.frequency_weights = frequency_weights_list
 
         only_weights = pd.DataFrame([self.frequency_weights[i][0] for i in range(len(self.frequency_weights))])
-        only_weights.to_csv('Data/MPT_weights.csv', index=False)
+        only_weights.to_csv('Data/Input/MPT_weights.csv', index=False)
         
         print("--Frequency trading using MPT successfully performed--")

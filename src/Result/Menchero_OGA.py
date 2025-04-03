@@ -39,7 +39,7 @@ class MencheroOGA():
             benchmark_w (list): A nested list of benchmark weights corresponding to stocks over multiple time periods.
             experimental_w (list): A nested list of experimental/portfolio weights corresponding to stocks over multiple time periods.
         """
-        self.bench_w =  pd.read_csv("Data/MPT_weights.csv")         # Correct data (from MPT.py)
+        self.bench_w =  pd.read_csv("Data/Input/MPT_weights.csv")         # Correct data (from MPT.py)
         self.exper_w = experimental                                 # Correct data (from IPR.py)
         self.returns = pd.read_csv("Data/Input/StockReturns.csv")
 
