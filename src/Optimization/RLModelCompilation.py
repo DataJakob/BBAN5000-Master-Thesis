@@ -156,7 +156,7 @@ class RL_Model():
             policy_kwargs={
                 "net_arch": [256, 256],
                 "use_sde": True,
-                "log_std_init":-2
+                "log_std_init":0.0,
             },
 
             learning_rate=linear_schedule(3e-4),
@@ -168,7 +168,7 @@ class RL_Model():
             gradient_steps=128,
             train_freq=(64, "step"),
 
-            ent_coef='auto',
+            ent_coef='auto_1.4',
             target_entropy='auto'
         )
 
@@ -176,14 +176,15 @@ class RL_Model():
         # Training
         model.learn(
             total_timesteps=self.total_timesteps,
-            callback=CallbackList([checkpoint_callback, eval_callback]),
+            # callback=CallbackList([checkpoint_callback, eval_callback]),
             progress_bar=True,
-            tb_log_name=f"{self.objective}_esg_{self.esg_compliancy}"
+            # tb_log_name=f"{self.objective}_esg_{self.esg_compliancy}"
         )
         
         self.model = model
         self.train_env = train_env
         self.eval_env = eval_env
+        print("Training phase over.")
 
 
 
@@ -201,32 +202,19 @@ class RL_Model():
         done = False
         
         while not done:
-            action, _ = self.model.predict(obs, deterministic=True)
-            
-            # Softmax normalization
-            # weights = np.exp(action - np.max(action))
-            # weights = weights / (weights.sum() + 1e-8)
-            
-            # Shorting normalization
-            # weights = action / (np.sum(np.abs(action))+1e-8)
-
+            action, _ = self.model.predict(obs, deterministic=False)
             weights = action / np.sum(action+1e-8)
-
-            obs, reward, done, info = test_env.step(weights)
+            obs, reward, done, info = test_env.step(action)
             
-            # Remove middle dimension if exists
-            if weights.ndim == 3:
-                weights = weights.squeeze(1)  # Converts (1,24) to (24,)
-            elif weights.ndim == 2 and weights.shape[0] == 1:
-                weights = weights[0]  # Converts (1,24) to (24,)
-
             weights_history.append(weights)
             returns_history.append(reward)
             
-            if done:
+            if done == True:
+                done = True
                 break
+        print("Test phase over")
 
-            # Ensure weights_history is 2D (timesteps × assets)
+        # Ensure weights_history is 2D (timesteps × assets)
         weights_array = np.array(weights_history)
         if weights_array.ndim > 2:
             weights_array = weights_array.squeeze()  # Remove singleton dimensions
@@ -239,7 +227,7 @@ class RL_Model():
         }
         
         results["weights"].to_csv(
-            f"Data/RL_weights_{self.objective}_esg_{self.esg_compliancy}.csv",
+            f"Data/TestPredictions/RL_weights_{self.objective}_esg_{self.esg_compliancy}.csv",
             index=False
         )
         

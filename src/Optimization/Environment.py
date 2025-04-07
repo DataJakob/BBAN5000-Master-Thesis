@@ -43,7 +43,7 @@ class PortfolioEnvironment(gym.Env):
                                        shape=(self.n_stocks,),)
         self.observation_space = spaces.Box(low=-np.inf, 
                                             high=np.inf, 
-                                            shape=(self.n_stocks * 1 * self.history_usage,)) # *4
+                                            shape=(self.n_stocks, self.history_usage),)
 
         self.current_step: int = 0
         self.weights_list: list = []
@@ -59,7 +59,7 @@ class PortfolioEnvironment(gym.Env):
         """
         super().reset(seed=seed)
 
-        self.current_step = self.history_usage
+        self.current_step = 0 
         self.weights_list = []
         self.returns_list = []
 
@@ -78,12 +78,15 @@ class PortfolioEnvironment(gym.Env):
         doc string
         """
         # Get one step ahead in observations
-        start_idx = 0
-        end_idx = self.current_step + 1
+        # start_idx = max(0, self.current_step - self.history_usage)
+        # end_idx = self.current_step
         maxlen = len(self.return_data)
 
         actual_data = pd.DataFrame(self.return_data)
-        actual_data = actual_data.iloc[start_idx:end_idx, : ]
+        # actual_data = actual_data.iloc[start_idx:end_idx].values.flatten()
+
+
+        actual_data = actual_data.iloc[:self.current_step, : ]
 
         if self.current_step <= self.history_usage -1:
             pad = pd.DataFrame(np.array([np.zeros(self.history_usage-actual_data.shape[0]) for _ in range(24)]))
@@ -94,7 +97,7 @@ class PortfolioEnvironment(gym.Env):
         else:
             padded_df = actual_data
 
-        return_array = np.array(padded_df.iloc[-self.history_usage:,:]).flatten()
+        return_array = np.array(padded_df.iloc[-self.history_usage:,:]).T
 
         return return_array
 
@@ -105,14 +108,14 @@ class PortfolioEnvironment(gym.Env):
         doc string
         """
         # Generate weights based on actions
-        if self.current_step == 0:
-            current_weights = np.repeat(1/self.n_stocks, self.n_stocks)
-        else:
-            current_weights = action
+
+        current_weights = action / np.sum(action+1e-8)
         self.weights_list.append(current_weights)
         
-        # Variables for (early) stopping
-        terminated = self.current_step >= len(self.return_data)-1
+        if self.current_step >= self.return_data.shape[0]-2:  # >= instead of == for safety
+            terminated = True
+        else:
+            terminated = False
         truncated = False
 
         # Add return if possible, (edge case if-statement)

@@ -52,7 +52,7 @@ class ResultConveyor():
         plt.title("Portfolio comparison", fontsize=16, fontweight='bold', pad=20)
         plt.suptitle("size = active return, green = esg, red = no esg", y=0.92, fontsize=12, style='italic')
         plt.grid()
-        plt.savefig("ResultS/OverviewPlot.PNG")
+        plt.savefig("Results/OverviewPlot.PNG")
         plt.close()
     
 
