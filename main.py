@@ -22,7 +22,7 @@ start_time = time.time()
 trading_n = 400
 history_usage = 504
 n_sectors = 6
-n_stocks_per_sector = 4
+n_stocks_per_sector = 3
 
 # For RL algorithm
 history_usage_RL = 80
@@ -30,45 +30,45 @@ rolling_reward_window = 80
 """------------------------------------------------"""
 # Defining stock pool
 ticker_df =  pd.DataFrame()
-ticker_df["Petroleum"] = ["EQNR.OL", "AKRBP.OL", "SUBC.OL", "BWO.OL",]
-ticker_df["Seafood (food)"] = ["ORK.OL", "MOWI.OL", "SALM.OL", "LSG.OL"]
-ticker_df["Materials"] = ["NHY.OL", "YAR.OL", "RECSI.OL", "BRG.OL"]  #del this
-ticker_df["Technologies"] = ["TEL.OL", "NOD.OL", "ATEA.OL", "BOUV.OL"]
-ticker_df["Financial"] = ["STB.OL", "DNB.OL", "GJF.OL", "AKER.OL"]
-ticker_df["Shipping"] = ["WAWI.OL", "SNI.OL", "BELCO.OL", "ODF.OL"]
+ticker_df["Petroleum"] = ["EQNR.OL", "SUBC.OL", "BWO.OL",]
+ticker_df["Seafood (food)"] = ["ORK.OL", "MOWI.OL", "LSG.OL"]
+ticker_df["Materials"] = ["NHY.OL", "YAR.OL", "RECSI.OL"]  #del this
+ticker_df["Technologies"] = ["TEL.OL", "NOD.OL", "ATEA.OL"]
+ticker_df["Financial"] = ["STB.OL", "DNB.OL", "AKER.OL"]
+ticker_df["Shipping"] = ["SNI.OL", "BELCO.OL", "ODF.OL"]
 ticker_df
 """------------------------------------------------"""
 # Defining ESG scores for respective securities
-esg_scores = np.array([36.6, 35.3, 17.9, 18, 
-                18, 21.2, 18.7, 29.2, 
-                15.7, 25.6, 25.6, 18.4, # Del this
-                19.8, 13.8, 18.1, 19, 
-                17.2, 14, 17.2, 19.5, 
-                19.7, 21.2, 26.8, 19.3])
+esg_scores = np.array([36.6, 17.9, 18, 
+                18, 23.2, 29.2, 
+                15.7, 25.4, 25.6, # Del this
+                19.8, 13.8, 18.1, 
+                17.3, 14, 12.3, 
+                21.2, 26.8, 24.9])
 """------------------------------------------------"""
-# # Retrieve data from yf API: y-m-d
-# data = DatRet(ticker_df, "2013-01-01", "2024-12-31", history_usage_RL=history_usage_RL)
-# # In function below, set log=True to check for data availability
+# # # Retrieve data from yf API: y-m-d
+# data = DatRet(ticker_df, "2006-07-01", "2024-03-31", history_usage_RL=history_usage_RL)
+# # # In function below, set log=True to check for data availability
 # data.retrieve_data()
 """------------------------------------------------"""
-# Generate benchmark weights thorugh MPT using Sharpe ratio
-benchmark = MPT(history_usage, trading_n)
-# IMPORTANT: In order to see  the effect of the weights, algo exclude last observation from optimization
-benchmark.frequency_optimizing()
+# # Generate benchmark weights thorugh MPT using Sharpe ratio
+# benchmark = MPT(history_usage, trading_n)
+# # IMPORTANT: In order to see  the effect of the weights, algo exclude last observation from optimization
+# benchmark.frequency_optimizing()
 """------------------------------------------------"""
-# objectives = ["Return", "Sharpe", "Sortino", "Sterling", "Return", "Sharpe", "Sortino", "Sterling"]
-# esg_compliancy = [True, True, True, True, False, False, False, False]
+objectives = ["Return", "Sharpe", "Sortino", "Sterling", "Return", "Sharpe", "Sortino", "Sterling"]
+esg_compliancy = [True, True, True, True, False, False, False, False]
 # # objectives = ["Sterling", "Return", "Sharpe", "Sortino", "Sterling"]
 # # esg_compliancy = [True, False, False, False, False]
-objectives = ["Sortino"]
-esg_compliancy = [False]
+# objectives = ["Sortino"]
+# esg_compliancy = [False]
 
 for i in range(len(objectives)):
     reinforcement = RLM(esg_scores, 
                         objective=objectives[i],
                         history_usage=history_usage_RL,
                         rolling_reward_window=rolling_reward_window,
-                        total_timesteps=5,
+                        total_timesteps=1500,
                         esg_compliancy=esg_compliancy[i],
                         )
     reinforcement.train_model()
