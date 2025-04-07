@@ -112,7 +112,7 @@ class PortfolioEnvironment(gym.Env):
         current_weights = action / np.sum(action+1e-8)
         self.weights_list.append(current_weights)
         
-        if self.current_step >= self.return_data.shape[0]-2:  # >= instead of == for safety
+        if self.current_step >= int(self.return_data.shape[0]-1):  # >= instead of == for safety
             terminated = True
         else:
             terminated = False
@@ -157,11 +157,6 @@ class PortfolioEnvironment(gym.Env):
             
         # Returns the next observation space for the algo to use
         observation = self.get_observation()
-
-        # if (self.current_step >= 2) and (current_reward[-1]>0):
-        #     new_reward *= 6
-        #     if new_reward > 0:
-        #         new_reward *= 6
 
         if self.current_step %300 == 0:
             print(new_reward)            

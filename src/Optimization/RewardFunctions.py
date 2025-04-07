@@ -23,9 +23,10 @@ def sharpe_ratio(return_array: np.array,
     sharpe =(mean / stddev) 
     # if sharpe < 0:
     #     return -1.0
-    sharpe_clipped = np.clip(sharpe, -3.0, 3.0) * 5
+    sharpe_clipped = np.clip(sharpe, -3.0, 3.0) 
+    last = return_array[-1] / return_array[-2]
 
-    return sharpe_clipped
+    return (last + 0.5 *sharpe_clipped)  * 5
 
 
 

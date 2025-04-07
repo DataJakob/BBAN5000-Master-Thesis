@@ -169,16 +169,15 @@ class RL_Model():
             train_freq=(64, "step"),
 
             ent_coef='auto_1.4',
-            target_entropy='auto'
+            target_entropy= -len(self.esg_data),
+            learning_starts=5000
         )
 
 
         # Training
         model.learn(
             total_timesteps=self.total_timesteps,
-            # callback=CallbackList([checkpoint_callback, eval_callback]),
             progress_bar=True,
-            # tb_log_name=f"{self.objective}_esg_{self.esg_compliancy}"
         )
         
         self.model = model
@@ -188,7 +187,7 @@ class RL_Model():
 
 
 
-    def test_model(self):
+    def predict(self):
         self.model.policy.eval()
         if not hasattr(self, 'eval_env'):
             test_data = self.stock_info.iloc[int(0.85*len(self.stock_info)):].reset_index(drop=True)
@@ -201,8 +200,8 @@ class RL_Model():
         returns_history = []
         done = False
         
-        while not done:
-            action, _ = self.model.predict(obs, deterministic=False)
+        while done == False:
+            action, _ = self.model.predict(obs, deterministic=True)
             weights = action / np.sum(action+1e-8)
             obs, reward, done, info = test_env.step(action)
             
@@ -212,148 +211,46 @@ class RL_Model():
             if done == True:
                 done = True
                 break
-        print("Test phase over")
 
         # Ensure weights_history is 2D (timesteps × assets)
         weights_array = np.array(weights_history)
         if weights_array.ndim > 2:
             weights_array = weights_array.squeeze()  # Remove singleton dimensions
                 
-        # Save results
-        results = {
-            "weights": pd.DataFrame(weights_array),
-            "returns": np.array(returns_history),
-            "cumulative_return": np.cumprod(1 + np.array(returns_history)) - 1
-        }
         
-        results["weights"].to_csv(
+        pd.DataFrame(weights_array).to_csv(
             f"Data/TestPredictions/RL_weights_{self.objective}_esg_{self.esg_compliancy}.csv",
             index=False
         )
+
         
-        return results
+        train_env = self.train_env
+        obs = train_env.reset()
+        weights_history_train = []
+        terminated = False
+        
+        while terminated == False:  # Changed this condition
+            action, _ = self.model.predict(obs, deterministic=True)
+            weights = action / np.sum(action + 1e-8)
+            obs, reward, terminated, info = train_env.step(action)
+            terminated = terminated[0]
+            weights_history_train.append(weights)
+            
+        print("Train phase over")
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
-
-    # def train_model(self):
-    #     """
-    #     Doc string
-    #     """
-    #     split_size = 0.85
-
-    #     train_data = self.stock_info.iloc[:int(split_size*len(self.stock_info))]
-    #     test_data = self.stock_info.iloc[int(split_size*len(self.stock_info)):].reset_index(drop=True)
-
-    #     self.train_data = train_data
-    #     self.test_data = test_data
-
-    #     train_env = PorEnv(history_usage=self.history_usage,
-    #                        rolling_reward_window=self.rolling_reward_window,
-    #                        return_data=self.train_data,
-    #                        esg_data=self.esg_data,
-    #                        objective=self.objective,
-    #                        esg_compliancy=self.esg_compliancy
-    #                        )
-
-    #     model = SAC(
-    #         policy="MlpPolicy",
-    #         env=train_env,
-    #         verbose=2,
-    #         # Exploration parameters
-    #         ent_coef="auto",
-    #         target_entropy="auto",
-    #         use_sde=True,
-    #         sde_sample_freq=64,
-    #         # Policy network settings
-    #         policy_kwargs={
-    #             "log_std_init": -1.5,  # More initial exploration
-    #             "net_arch": [256, 256],
-    #             "use_expln": True  # Better for bounded actions
-    #         },
-    #         # Learning parameters
-    #         learning_rate=3e-4,
-    #         buffer_size=100_000,
-    #         batch_size=256,
-    #         tau=0.01,
-    #         gamma=0.95
-    #     )
-    #     # model = PPO(
-    #     #     policy=LSTMPPOPolicy,
-    #     #     env=train_env,
-    #     #     learning_rate=3e-4,
-    #     #     n_steps=2048,
-    #     #     batch_size=64,
-    #     # )
-
-
-  
-    #     from stable_baselines3.common.callbacks import BaseCallback
-    #     import time
-
-
-    #     model.learn(total_timesteps=self.total_timesteps,progress_bar=True)#, verbose=1 )
-    #     self.model = model
-
-
-
-    # def test_model(self):
-    #     test_env = PorEnv(history_usage=self.history_usage,
-    #                        rolling_reward_window=self.rolling_reward_window,
-    #                        return_data=self.test_data,
-    #                        esg_data=self.esg_data,
-    #                        objective=self.objective,
-    #                        esg_compliancy=self.esg_compliancy
-    #                        )
-
-    #     obs, additional_info = test_env.reset()
-    #     weights_history = []
-    #     finished = False
-
-    #     while not finished: 
-    #         action, _ = self.model.predict(obs, deterministic=True)
-
-    #         weights = np.exp(action+1e-9)
-    #         weights = weights / np.sum(weights)
-
-    #         # weights = ((action+1e-8)+1) / 2
-    #         # weights = weights / np.sum(weights)
-
-    #         # Allow shorting
-    #         # weights = action / (np.sum(np.abs(action)) + 1e-8)  # Normalize absolute values
-
-    #         # weights = action / (np.sum(action)+1e-8)
-
-    #         obs, reward, terminated, truncated, info = test_env.step(weights)
-    #         finished = terminated or truncated
-
-    #         weights_history.append(weights)
-
-    #     weight_df  = pd.DataFrame(weights_history)
-    #     weight_df.to_csv("Data/RL_weights_"+self.objective+"_esg_"+str(self.esg_compliancy)+".csv", 
-    #                       index=False)
+        # Convert to array and ensure proper shape
+        try:
+            weights_array_train = np.array(weights_history_train)
+            
+            # If we have 3D array (episodes × timesteps × assets), reshape
+            if weights_array_train.ndim == 3:
+                weights_array_train = weights_array_train.reshape(-1, weights_array_train.shape[-1])
+            
+            # Save to CSV
+            pd.DataFrame(weights_array_train).to_csv(
+                f"Data/TrainPredictions/RL_weights_{self.objective}_esg_{self.esg_compliancy}.csv",
+                index=False
+            )
+        except ValueError as e:
+            print(f"Could not save weights: {e}")
+            print("Shapes in weights_history_train:", [w.shape for w in weights_history_train])
