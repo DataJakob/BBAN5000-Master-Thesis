@@ -87,7 +87,7 @@ class RL_Model():
             learning_rate=0.001,
             ent_coef='auto_0.1',
             batch_size=128,
-            train_freq=(200, "step"),
+            train_freq=(20, "step"),
             gradient_steps=64,
             buffer_size=100_000,
             learning_starts=1000,
@@ -106,21 +106,18 @@ class RL_Model():
 
             #weights_t = scipy.special.softmax(action)
 
-            weights_t = (action+1) / 2
-            weights_t /= np.sum(weights_t)
-
-            obs, reward, terminated, truncated, info = train_env.step(weights_t)
+            obs, reward, terminated, truncated, info = train_env.step(action)
             finished = terminated or truncated
             
             reward_history_t.append(reward)
-            weights_history_t.append(weights_t)
+            #weights_history_t.append(weights)
 
         wack_df = pd.DataFrame(train_env.check)
         wack_df.to_csv("myDF.csv", index=False)
 
-        weight_df_t  = pd.DataFrame(weights_history_t)
-        weight_df_t.to_csv("Data/RL_weights_t_"+self.objective+"_esg_"+str(self.esg_compliancy)+".csv", 
-                          index=False)
+        # weight_df_t  = pd.DataFrame(weights_history_t)
+        # weight_df_t.to_csv("Data/RL_weights_t_"+self.objective+"_esg_"+str(self.esg_compliancy)+".csv", 
+        #                   index=False)
         
         reward_df_t  = pd.DataFrame(reward_history_t)
         reward_df_t.to_csv("Data/RL_reward_t_"+self.objective+"_esg_"+str(self.esg_compliancy)+".csv", 
@@ -150,28 +147,24 @@ class RL_Model():
 
 
         while not finished: 
-            action, _ = self.model.predict(obs, deterministic=True)
-
+            action, _ = self.model.predict(obs, deterministic=False)
 
             #weights = scipy.special.softmax(action)
 
-            weights = (action+1) / 2
-            weights /= np.sum(weights)
-
-            obs, reward, terminated, truncated, info = test_env.step(weights)
+            obs, reward, terminated, truncated, info = test_env.step(action)
             finished = terminated or truncated
 
             reward_history.append(reward)
-            weights_history.append(weights)
+            # weights_history.append(weights)
 
             
         mean_reward, std_reward = evaluate_policy(self.model, test_env, n_eval_episodes=10)
         print(f"mean_reward:{mean_reward:.2f} +/- {std_reward:.2f}")
 
 
-        weight_df  = pd.DataFrame(weights_history)
-        weight_df.to_csv("Data/RL_weights_"+self.objective+"_esg_"+str(self.esg_compliancy)+".csv", 
-                          index=False)
+        # weight_df  = pd.DataFrame(weights_history)
+        # weight_df.to_csv("Data/RL_weights_"+self.objective+"_esg_"+str(self.esg_compliancy)+".csv", 
+        #                   index=False)
         
         reward_df  = pd.DataFrame(reward_history)
         reward_df.to_csv("Data/RL_reward_"+self.objective+"_esg_"+str(self.esg_compliancy)+".csv", 

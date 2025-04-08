@@ -25,7 +25,7 @@ def sortino_ratio(return_array: np.array):
 
     ratio = annualized_mean_return / downside_risk
 
-    return ratio*3
+    return ratio*1000
 
 
 
@@ -94,7 +94,7 @@ def return_ratio(return_array):
     reward = (np.cumprod(return_array+1)-1)[-1]
  
 
-    return reward*3
+    return reward*100
 
 
 

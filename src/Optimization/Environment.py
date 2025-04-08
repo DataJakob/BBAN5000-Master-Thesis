@@ -39,7 +39,7 @@ class PortfolioEnvironment(gym.Env):
         self.objective: str = objective
         self.esg_compliancy: bool = esg_compliancy
 
-        self.action_space = spaces.Box(low=-1, 
+        self.action_space = spaces.Box(low=0, 
                                        high=1, 
                                        shape=(self.n_stocks,),)
         self.observation_space = spaces.Box(low=-np.inf, 
@@ -62,7 +62,6 @@ class PortfolioEnvironment(gym.Env):
         self._np_random, seed = gym.utils.seeding.np_random(seed)
         np.random.seed(42)  # Set numpy seed
         
-
 
         self.current_step = 0
         self.weights = np.repeat(1/self.n_stocks, self.n_stocks)
@@ -109,10 +108,8 @@ class PortfolioEnvironment(gym.Env):
         doc string
         """
         # Generate weights based on actions
-        if self.current_step == 0:
-            current_weights = self.weights
-        else:
-            current_weights = action
+        current_weights = action
+        current_weights /= np.sum(current_weights)
         self.weights_list.append(current_weights)
         
         # Find current weights and multiply with weights
@@ -164,14 +161,14 @@ class PortfolioEnvironment(gym.Env):
         
         #print(f"Step: {self.current_step}, Objective: {self.objective}, Reward: {final_reward}, ESG:{self.esg_compliancy}")
         self.check.append([current_weights, final_reward])
-        print(type(current_weights))
+    
         # New step
         self.current_step += 1
             
         # Returns the next observation space for the algo to use
         next_window = self.get_observation()
 
-        return next_window, final_reward, terminated, truncated, {}
+        return next_window, final_reward,  terminated, truncated, {}
         
 
 
