@@ -60,7 +60,7 @@ esg_scores = np.array([36.6, 17.9, 18,
 # esg_compliancy = [True, True, True, True, False, False, False, False]
 # # objectives = ["Sterling", "Return", "Sharpe", "Sortino", "Sterling"]
 # # esg_compliancy = [True, False, False, False, False]
-objectives = ["Sharpe"]
+objectives = ["Sterling"]
 esg_compliancy = [False]
 
 for i in range(len(objectives)):
@@ -68,7 +68,7 @@ for i in range(len(objectives)):
                         objective=objectives[i],
                         history_usage=history_usage_RL,
                         rolling_reward_window=rolling_reward_window,
-                        total_timesteps=50000,
+                        total_timesteps=100000,
                         esg_compliancy=esg_compliancy[i],
                         )
     reinforcement.train_model()
