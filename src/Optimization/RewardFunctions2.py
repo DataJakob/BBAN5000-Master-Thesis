@@ -1,6 +1,9 @@
 import numpy as np
+import pandas as pd
 
-x = 5 #magnitude multiplier
+x = 1 #magnitude multiplier (removed as it fucked the clipping)
+upper = 150
+lower = -100  # Arbitrary bounds set to limit sortino and sterling from extreem values
 
 
 def sharpe_ratio(return_window: np.array):
@@ -9,17 +12,19 @@ def sharpe_ratio(return_window: np.array):
     stddev = np.std(return_window)
 
     sharpe = mean / (stddev + 1e-8)
+    sharpe = np.clip(sharpe, lower, upper) # Redundant, but gives equality to measurements
 
-    return sharpe * x  
-
+    return sharpe  
 
 
 
 def return_ratio(return_window: np.array):
     
-    cumu = (np.cumprod(return_window+1)-1)[-1]
+    #cumu = (np.cumprod(return_window+1)-1)[-1]
+    mean = np.mean(return_window)
+    mean = np.clip(mean, lower, upper) # Redundant, but gives equality to measurements
 
-    return cumu * x
+    return mean 
 
 
 
@@ -27,25 +32,31 @@ def sortino_ratio(return_window: np.array):
 
     mean = np.mean(return_window)
     downside_risk = np.sqrt(np.mean(np.square(np.minimum(return_window, 0))))
-    downside_risk += 1
 
-    sortino = mean / downside_risk
+    sortino = mean / (downside_risk + 1e-8)
+    sortino = np.clip(sortino, lower, upper) # Currently arbitrary
 
-    return sortino * x
+    return sortino 
 
 
 def sterling_ratio(return_window: np.array):
 
     mean = np.mean(return_window)
 
-    cumu = (np.cumprod(return_window)+1)-1
-    peak = cumu.cummax()
+    cumu = (np.cumprod(return_window +1))
+    peak = np.maximum.accumulate(cumu)
     drawdown = (cumu - peak)/peak
-    avg_drawdown = np.mean(-drawdown[drawdown < 0])
+    #avg_drawdown = np.mean(-drawdown[drawdown < 0]) 
+    negative_drawdowns = drawdown[drawdown < 0]
+    if negative_drawdowns.size == 0:
+        avg_drawdown = 0.0  # Returns maximum sterling, given returns
+    else:
+        avg_drawdown = np.mean(-negative_drawdowns)
 
-    sterling = mean / np.abs((avg_drawdown + 1e-8)- 0.1)
+    sterling = mean / (avg_drawdown + 1e-8)
+    sterling = np.clip(sterling, lower, upper)
 
-    return sterling * x
+    return sterling 
 
 
 def penalise_reward(reward_window, esg_score):
@@ -54,4 +65,3 @@ def penalise_reward(reward_window, esg_score):
    
     penalised_reward = reward_window - penalty     
     return penalised_reward
-
