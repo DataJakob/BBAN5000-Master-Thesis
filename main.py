@@ -29,14 +29,15 @@ history_usage_RL = 20
 rolling_reward_window = 20
 """------------------------------------------------"""
 # Defining stock pool
-ticker_df =  pd.DataFrame()
-ticker_df["Petroleum"] = ["EQNR.OL", "SUBC.OL", "BWO.OL",]
-ticker_df["Seafood (food)"] = ["ORK.OL", "MOWI.OL", "LSG.OL"]
-ticker_df["Materials"] = ["NHY.OL", "YAR.OL", "RECSI.OL"]  #del this
-ticker_df["Technologies"] = ["TEL.OL", "NOD.OL", "ATEA.OL"]
-ticker_df["Financial"] = ["STB.OL", "DNB.OL", "AKER.OL"]
-ticker_df["Shipping"] = ["SNI.OL", "BELCO.OL", "ODF.OL"]
-ticker_df
+ticker_df =  pd.DataFrame({
+    "Petroleum": ["EQNR.OL", "SUBC.OL", "BWO.OL"],
+    "Food": ["ORK.OL", "MOWI.OL", "LSG.OL"],
+    "Materials": ["NHY.OL", "YAR.OL", "RECSI.OL"],
+    "Technologies": ["TEL.OL", "NOD.OL", "ATEA.OL"],
+    "Financial": ["STB.OL", "DNB.OL", "AKER.OL"],
+    "Shipping":["SNI.OL", "BELCO.OL", "ODF.OL"]
+})
+
 """------------------------------------------------"""
 # Defining ESG scores for respective securities
 esg_scores = np.array([36.6, 17.9, 18, 
