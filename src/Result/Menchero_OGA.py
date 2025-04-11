@@ -39,15 +39,15 @@ class MencheroOGA():
             benchmark_w (list): A nested list of benchmark weights corresponding to stocks over multiple time periods.
             experimental_w (list): A nested list of experimental/portfolio weights corresponding to stocks over multiple time periods.
         """
-        self.bench_w =  pd.read_csv("Data/Input/MPT_weights.csv")         # Correct data (from MPT.py)
+        self.bench_w =  pd.read_csv("Data/MPT_weights.csv")         # Correct data (from MPT.py)
         self.exper_w = experimental                                 # Correct data (from IPR.py)
-        self.returns = pd.read_csv("Data/Input/StockReturns.csv")
+        self.returns = pd.read_csv("Data/StockReturns.csv")
 
         # All optimizations weights are to be multiplied with returns for time t+1
         self.n_optimizations: int = self.bench_w.shape[0]
         
-        self.n_sectors = n_sectors
-        self.n_stocks = n_stocks_per_sector
+        self.n_sectors: int = n_sectors
+        self.n_stocks: int = n_stocks_per_sector
 
         self.allocation_effects: list = None
         self.selection_effects: list = None
@@ -112,14 +112,17 @@ class MencheroOGA():
         """
 
         # Contains only the last n-trading observations
-        relevant_return_list = self.returns.iloc[-self.n_optimizations:].reset_index(drop=True) 
+        relevant_return_list = self.returns.iloc[-self.n_optimizations-1:].reset_index(drop=True) 
 
         allocation_list = []
         selection_list = []
+        # t = 0
         for time in range(self.n_optimizations):
             effects = self.analyzer_at_time_t(relevant_return_list.iloc[time], 
                                               np.array(self.exper_w.iloc[time]),
                                               np.array(self.bench_w.iloc[time]))
+            # t+=1
+            # print(t)
 
             selection_list.append(effects[0])
             allocation_list.append(effects[1])

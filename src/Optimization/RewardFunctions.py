@@ -1,131 +1,94 @@
 import numpy as np
+import pandas
 
 
+x = 1
+upper = 30
+lower = 30
 
-def sharpe_ratio(return_array: np.array,
-                 min_obs: int=3
-                 ):
+
+def sharpe_ratio(return_window: np.array):
     """
     doc string
     """
-    n = len(return_array)
-    if n < min_obs:
-        return 0.0
-        
-    # Calculate mean and stddev
-    mean = np.mean(return_array)
-    stddev = np.std(return_array) 
-    
-    # Avoid division by zero or extreme values
-    if stddev < 1e-5:
-        return mean/1
-    
-    sharpe =(mean / stddev) 
-    # if sharpe < 0:
-    #     return -1.0
-    sharpe_clipped = np.clip(sharpe, -3.0, 3.0) 
-    last = return_array[-1] / return_array[-2]
+    mean = np.mean(return_window)
+    stddev = np.std(return_window)
 
-    return (last + 0.5 *sharpe_clipped)  * 5
+    sharpe = mean / (stddev + 1e-8)
+    #sharpe = sharpe * x
+    sharpe = np.clip(sharpe, lower, upper) # Redundant, but gives equality to measurements
+    if np.isnan(sharpe):
+        return 0.0 
+
+    return sharpe  
 
 
 
-def sortino_ratio(return_array: np.array, 
-                  min_obs: int = 3
-                  ):
+def return_ratio(return_window: np.array):
     """
     doc string
     """
-    n = len(return_array)
-    if n < min_obs:
-        return 0.0
-    
-    mean = np.mean(return_array) 
-    
-    downside_risk = np.sqrt(np.mean(np.square(np.minimum(return_array, 0))))
-    downside_risk += 1
+    #cumu = (np.cumprod(return_window+1)-1)[-1]
+    mean = np.mean(return_window)
+    #mean = mean * x
+    mean = np.clip(mean, lower, upper) # Redundant, but gives equality to measurements
 
-    sortino = mean / (downside_risk if downside_risk >= 1e-5 else 1)
-    sortino_clipped = np.clip(sortino,  -3,3) * 60
+    if np.isnan(mean):
+        return 0.0 
 
-    return sortino_clipped
+    return mean 
 
 
 
-
-def calculate_drawdown(return_array):
+def sortino_ratio(return_window: np.array):
     """
     doc string
     """
-    if len(return_array) == 0:
-        return 0.0
-    
-    wealth_index = np.cumprod(1 + return_array)
-    
-    previous_peaks = np.maximum.accumulate(wealth_index)
-    
-    drawdowns = (wealth_index - previous_peaks) / previous_peaks
-    
-    return np.min(drawdowns)  # Maximum drawdown (most negative)
+    mean = np.mean(return_window)
+    downside_risk = np.sqrt(np.mean(np.square(np.minimum(return_window, 0))))
+
+    sortino = mean / (downside_risk + 1e-8)
+    #sortino = sortino * x
+    sortino = np.clip(sortino, lower, upper) # Currently arbitrary
+
+    if np.isnan(sortino):
+        return 0.0 
+
+    return sortino 
 
 
-def sterling_ratio(return_array):
+def sterling_ratio(return_window: np.array):
+    """ 
+    doc string 
     """
-    doc string
-    """
-    # def max_drawdown_penalty(returns):
-    cumulative = np.cumsum(return_array)
-    peak = np.maximum.accumulate(cumulative)
-    drawdown = (peak - cumulative) / (peak + 1e-5)
-    max_dd = np.max(drawdown)
+    mean = np.mean(return_window)
 
-    reward =  sharpe_ratio(return_array) -0.5 * (-max_dd) * 5
-    return reward
-    # if len(return_array) < 2:
-    #     return 0.0
-    
-    # periods_per_year = 504
-    
-    # # Annualized return
-    # annualized_return = np.mean(return_array) * periods_per_year
-    
-    # # Calculate drawdowns
-    # wealth_index = np.cumprod(1 + return_array)
-    # previous_peaks = np.maximum.accumulate(wealth_index)
-    # drawdowns = (wealth_index - previous_peaks) / previous_peaks
-    
-    # # Get largest 3 drawdowns and average them
-    # if len(drawdowns) > 0:
-    #     largest_drawdowns = np.sort(drawdowns)[:min(3, len(drawdowns))]
-    #     avg_drawdown = np.mean(largest_drawdowns)
-    # else:
-    #     avg_drawdown = 0.0
-    
-    # if avg_drawdown >= 0:  # No drawdown occurred
-    #     return np.inf if annualized_return > 0 else 0.0
-    
-    # return annualized_return / abs(avg_drawdown)
+    cumu = (np.cumprod(return_window +1))
+    peak = np.maximum.accumulate(cumu)
+    drawdown = (cumu - peak)/peak
+    #avg_drawdown = np.mean(-drawdown[drawdown < 0]) 
+    negative_drawdowns = drawdown[drawdown < 0]
+    if negative_drawdowns.size == 0:
+        avg_drawdown = 0.0  # Returns maximum sterling, given returns
+    else:
+        avg_drawdown = np.mean(-negative_drawdowns)
 
+    sterling = mean / (avg_drawdown + 1e-8)
+    #sterling = sterling * x
+    sterling = np.clip(sterling, lower, upper)
 
+    if np.isnan(sterling):
+        return 0.0 
 
-def return_ratio(return_array):
-    """
-    doc string
-    """
-    # if return_array[-1] >= 0:
-    #     reward = return_array[-1]*100
-    # else:
-    #     reward = return_array[-1] * 100
-    reward = (np.cumprod(return_array+1)-1)[-1] * 5
-    
-    return reward
+    return sterling 
 
 
 def penalise_reward(reward, esg_score):
     """
-    doc string 
+    doc string
     """
-    penalty = 0.3 * ((reward/100) * ((esg_score/100)*2.5))   
+    penalty = 0.3 * (esg_score / 40) 
+   
     penalised_reward = reward - penalty     
-
+    
     return penalised_reward

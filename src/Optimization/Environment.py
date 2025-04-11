@@ -7,7 +7,6 @@ from gymnasium import spaces
 from src.Optimization.RewardFunctions import (
     sharpe_ratio,
     sortino_ratio,
-    calculate_drawdown,
     sterling_ratio,
     return_ratio,
     penalise_reward
@@ -41,9 +40,10 @@ class PortfolioEnvironment(gym.Env):
         self.action_space = spaces.Box(low=0, 
                                        high=1, 
                                        shape=(self.n_stocks,),)
+        
         self.observation_space = spaces.Box(low=-np.inf, 
                                             high=np.inf, 
-                                            shape=(self.n_stocks, self.history_usage),)
+                                            shape=(self.n_stocks * 4, self.history_usage),)
 
         self.current_step: int = 0
         self.weights_list: list = []
@@ -89,10 +89,10 @@ class PortfolioEnvironment(gym.Env):
         actual_data = actual_data.iloc[:self.current_step, : ]
 
         if self.current_step <= self.history_usage -1:
-            pad = pd.DataFrame(np.array([np.zeros(self.history_usage-actual_data.shape[0]) for _ in range(18)]))
+            pad = pd.DataFrame(np.array([np.zeros(self.history_usage-actual_data.shape[0]) for _ in range(72)]))
             padded_df = pd.concat([pad.T, actual_data]).reset_index(drop=True)
         elif self.current_step >= (maxlen-1):
-            pad = pd.DataFrame(np.array([np.zeros(maxlen - self.current_step) for _ in range(18)]))
+            pad = pd.DataFrame(np.array([np.zeros(maxlen - self.current_step) for _ in range(72)]))
             padded_df = pd.concat([actual_data, pad.T]).reset_index(drop=True)
         else:
             padded_df = actual_data
@@ -158,8 +158,8 @@ class PortfolioEnvironment(gym.Env):
         # Returns the next observation space for the algo to use
         observation = self.get_observation()
 
-        if self.current_step %300 == 0:
-            print(new_reward)            
+        # if self.current_step %1200 == 0:
+        #     print(new_reward)            
 
         return observation, new_reward, terminated, truncated, {}
         

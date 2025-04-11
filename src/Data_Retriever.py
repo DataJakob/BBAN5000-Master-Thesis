@@ -5,7 +5,7 @@ import yfinance as yf
 
 
 
-class DataRetrieverNew:
+class DataRetriever:
     """
     doc string 
     """
@@ -50,15 +50,16 @@ class DataRetrieverNew:
             individual_df = pd.merge(date_df, open, on="Date", how="left")
             inter_df = pd.merge(date_df, stock_data["Close"], on="Date", how="left")
             individual_df[self.ticker_list[i]].iloc[1::2] = inter_df[self.ticker_list[i]].iloc[::2]
-            return_series = individual_df.interpolate().ffill().bfill()
+            return_series = individual_df.pct_change().interpolate().ffill().bfill()
             vol_series = pd.merge(date_df, stock_data["Volume"], on="Date", how="left").interpolate().ffill().bfill()
 
             self.return_df[self.ticker_list[i]] = return_series[self.ticker_list[i]]
             self.volume_df[self.ticker_list[i]] = self.z_score(vol_series[self.ticker_list[i]])
             self.rolling_return_df[self.ticker_list[i]] = return_series[self.ticker_list[i]].rolling(40).mean().bfill()
-            self.return_df[self.ticker_list[i]] = return_series[self.ticker_list[i]].rolling(40).std().bfill()
+            self.rolling_volatility_df[self.ticker_list[i]] = return_series[self.ticker_list[i]].rolling(40).std().bfill()
         
         master_df = pd.concat([self.return_df, self.volume_df, self.rolling_return_df, self.rolling_volatility_df], axis = 1)
         master_df.to_csv("Data/Input.csv", index=False)
+        self.return_df.to_csv("Data/StockReturns.csv", index=False)
 
         print("--- Data retrieved successfully ---")

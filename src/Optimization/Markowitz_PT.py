@@ -28,7 +28,7 @@ class MarkowitzPT():
             Generates new stock positions for each time interval using MPT and stores them in `frequency_weights`.
     """
     def __init__(self,  history_usage=None, n_optimizations=None):
-        self.data = pd.read_csv("Data/Input/StockReturns.csv")
+        self.data = pd.read_csv("Data/StockReturns.csv")
         self.history_usage: int = history_usage
         self.n_optimizations: int = n_optimizations
 
@@ -103,6 +103,6 @@ class MarkowitzPT():
         self.frequency_weights = frequency_weights_list
 
         only_weights = pd.DataFrame([self.frequency_weights[i][0] for i in range(len(self.frequency_weights))])
-        only_weights.to_csv('Data/Input/MPT_weights.csv', index=False)
+        only_weights.to_csv('Data/MPT_weights.csv', index=False)
         
         print("--Frequency trading using MPT successfully performed--")

@@ -9,14 +9,15 @@ from src.Result.Menchero_OGA import MencheroOGA as MOGA
 class GenerateResult():
 
     def __init__(self, path, n_sectors, n_stock_per_sector, n_optimizations, esg_data, sector_names):    
-        self.returns = pd.read_csv("Data/Input/StockReturns.csv")
-        self.bench_w = pd.read_csv("Data/Input/MPT_weights.csv")
+        self.returns = pd.read_csv("Data/StockReturns.csv")
+        self.bench_w = pd.read_csv("Data/MPT_weights.csv")
         self.path = path
         self.exper_w = pd.read_csv("Data/TestPredictions/RL_weights_"+self.path+".csv")
         self.esg_data = esg_data
 
         self.n_sectors = n_sectors
         self.n_stock = n_stock_per_sector
+        
         # All optimizations weights are to be multiplied with returns for time t+1
         self.n_optimizations = n_optimizations 
         self.sector_names = sector_names
