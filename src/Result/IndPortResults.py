@@ -60,7 +60,7 @@ class GenerateResult():
         ax[0,1].set_ylabel("Return")
         ax[0,1].set_title('Attribution Effect Variation')
 
-        ax[1,0].scatter(x=esg, y=er,
+        ax[1,0].scatter(x=esg, y=pd.Series(er).pct_change(),
                         s= 12,
                         color="black")
         ax[1,0].set_xlabel("Average ESG score")

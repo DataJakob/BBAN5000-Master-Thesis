@@ -50,8 +50,14 @@ class DataRetriever:
             individual_df = pd.merge(date_df, open, on="Date", how="left")
             inter_df = pd.merge(date_df, stock_data["Close"], on="Date", how="left")
             individual_df[self.ticker_list[i]].iloc[1::2] = inter_df[self.ticker_list[i]].iloc[::2]
-            return_series = individual_df.pct_change().interpolate().ffill().bfill()
-            vol_series = pd.merge(date_df, stock_data["Volume"], on="Date", how="left").interpolate().ffill().bfill()
+
+            return_series = individual_df.pct_change()
+            return_series.replace(0.0, np.nan, inplace=True)  # Replace 0.0 with np.nan
+            return_series = return_series.interpolate().ffill().bfill() 
+
+            vol_series = pd.merge(date_df, stock_data["Volume"], on="Date", how="left") / 2
+            vol_series.replace(0.0, np.nan, inplace=True)  # Replace 0.0 with np.nan
+            vol_series = vol_series.interpolate().ffill().bfill()
 
             self.return_df[self.ticker_list[i]] = return_series[self.ticker_list[i]]
             self.volume_df[self.ticker_list[i]] = self.z_score(vol_series[self.ticker_list[i]])

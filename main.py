@@ -69,7 +69,7 @@ for i in range(len(objectives)):
                         objective=objectives[i],
                         history_usage=history_usage_RL,
                         rolling_reward_window=rolling_reward_window,
-                        total_timesteps=100000,
+                        total_timesteps=50_000,
                         esg_compliancy=esg_compliancy[i], 
                         gen_validation_weights=True
                         )
@@ -97,7 +97,5 @@ for i in range(len(paths)):
 theta = RC(analysis_list, trading_n)
 theta.convey_results()
 """------------------------------------------------"""
-
-
 elapsed_time = time.time() - start_time
 print(f"Elapsed time: {elapsed_time:.4f} seconds")
