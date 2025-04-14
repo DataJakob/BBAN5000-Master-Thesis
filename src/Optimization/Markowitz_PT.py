@@ -96,13 +96,13 @@ class MarkowitzPT():
             sliced_data.append(data_per_time_interval)
 
         frequency_weights_list = []
-        for y in range(0, self.n_optimizations,1):
+        for y in range(0, 1,1): # self.n_optimzations
   
             ind_weights = self.optimize_portfolio(sliced_data[y])
             frequency_weights_list.append(ind_weights)
         self.frequency_weights = frequency_weights_list
 
-        only_weights = pd.DataFrame([self.frequency_weights[i][0] for i in range(len(self.frequency_weights))])
+        only_weights = pd.DataFrame([self.frequency_weights[0][0] for i in range(self.n_optimizations)]) # first index = 0
         only_weights.to_csv('Data/MPT_weights.csv', index=False)
         
         print("--Frequency trading using MPT successfully performed--")

@@ -20,13 +20,13 @@ start_time = time.time()
 """------------------------------------------------"""
 # Define necessary non-fixed variables
 trading_n = 400
-history_usage = 504
+history_usage = 521
 n_sectors = 6
 n_stocks_per_sector = 3
 
 # For RL algorithm
-history_usage_RL = 80
-rolling_reward_window = 80
+history_usage_RL = 40
+rolling_reward_window = 40
 """------------------------------------------------"""
 # Defining stock pool
 ticker_df =  pd.DataFrame({
@@ -53,23 +53,23 @@ esg_scores = np.array([
 # # In function below, set log=True to check for data availability
 # data.retrieve_data()
 """------------------------------------------------"""
-# # Generate benchmark weights thorugh MPT using Sharpe ratio
-# benchmark = MPT(history_usage, trading_n)
-# # IMPORTANT: In order to see  the effect of the weights, algo exclude last observation from optimization
-# benchmark.frequency_optimizing()
+# Generate benchmark weights thorugh MPT using Sharpe ratio
+benchmark = MPT(history_usage, trading_n)
+# IMPORTANT: In order to see  the effect of the weights, algo exclude last observation from optimization
+benchmark.frequency_optimizing()
 """------------------------------------------------"""
 # objectives = ["Return", "Sharpe", "Sortino", "Sterling", "Return", "Sharpe", "Sortino", "Sterling"]
 # esg_compliancy = [True, True, True, True, False, False, False, False]
 # objectives = ["Sterling", "Return", "Sharpe", "Sortino", "Sterling"]
 # esg_compliancy = [True, False, False, False, False]
 objectives = ["Sharpe"]
-esg_compliancy = [False]
+esg_compliancy = [True]
 for i in range(len(objectives)):
     reinforcement = RLM(esg_scores, 
                         objective=objectives[i],
                         history_usage=history_usage_RL,
                         rolling_reward_window=rolling_reward_window,
-                        total_timesteps=50_000,
+                        total_timesteps=70_000,
                         esg_compliancy=esg_compliancy[i], 
                         gen_validation_weights=True
                         )

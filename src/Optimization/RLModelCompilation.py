@@ -44,7 +44,7 @@ class RL_Model():
         """
         doc string
         """
-        self.stock_info = pd.read_csv("Data/StockReturns.csv")
+        self.stock_info = pd.read_csv("Data/Input.csv")
         self.esg_data = esg_data
 
         self.train_data = None
@@ -147,7 +147,7 @@ class RL_Model():
             batch_size=64,
             gradient_steps=128,
             train_freq=(64, "step"),
-            ent_coef='auto_1.4',
+            ent_coef='auto_0.8',
             target_entropy= -len(self.esg_data),
             learning_starts=5000
         )
@@ -178,8 +178,8 @@ class RL_Model():
         # Transfer learning setup
         initial_model_path = "temp_initial_model.zip"
         self.model.save(initial_model_path)  # Save original model
-        original_lr = self.model.learning_rate
-        self.retrain_count = 0
+        # original_lr = self.model.learning_rate
+        # self.retrain_count = 0
 
         for step in range(total_test_steps):
             # Predict weights for current step
@@ -190,39 +190,39 @@ class RL_Model():
             # Step to next observation
             obs, _, done, _ = test_env.step(action)
             
-            # Transfer learning-based fine-tuning
-            if (step + 1) % self.retrain_interval == 0 and (step + 1) < total_test_steps - 10:
-                print(f"\nFine-tuning at step {step + 1} of {total_test_steps}")
+            # # Transfer learning-based fine-tuning
+            # if (step + 1) % self.retrain_interval == 0 and (step + 1) < total_test_steps - 10:
+            #     print(f"\nFine-tuning at step {step + 1} of {total_test_steps}")
                 
-                # 1. Get only the most recent data for fine-tuning
-                start_idx = max(0, step + 1 - self.retrain_interval)
-                incremental_data = self.test_data.iloc[start_idx:step + 1]
+            #     # 1. Get only the most recent data for fine-tuning
+            #     start_idx = max(0, step + 1 - self.retrain_interval)
+            #     incremental_data = self.test_data.iloc[start_idx:step + 1]
                 
-                # 2. Create small incremental environment
-                incremental_env = self.create_envs(incremental_data, eval=False)
+            #     # 2. Create small incremental environment
+            #     incremental_env = self.create_envs(incremental_data, eval=False)
                 
-                # 3. Configure for fine-tuning
-                self.model.learning_rate = original_lr #* 0.2  # Reduced learning rate
-                self.model.set_env(incremental_env)
+            #     # 3. Configure for fine-tuning
+            #     self.model.learning_rate = original_lr #* 0.2  # Reduced learning rate
+            #     self.model.set_env(incremental_env)
                 
-                # 4. Short fine-tuning phase
-                self.model.learn(
-                    total_timesteps=int(self.total_timesteps * 0.3),  # 30% of original
-                    progress_bar=True
-                )
+            #     # 4. Short fine-tuning phase
+            #     self.model.learn(
+            #         total_timesteps=int(self.total_timesteps * 0.3),  # 30% of original
+            #         progress_bar=True
+            #     )
                 
-                # Restore original learning rate
-                self.model.learning_rate = original_lr
-                self.retrain_count += 1
+            #     # Restore original learning rate
+            #     self.model.learning_rate = original_lr
+            #     self.retrain_count += 1
                 
-                # 5. Reset test environment
-                test_env = self.create_envs(self.test_data, eval=True)
-                test_env.current_step = step + 1
-                obs = test_env.reset()
+            #     # 5. Reset test environment
+            #     test_env = self.create_envs(self.test_data, eval=True)
+            #     test_env.current_step = step + 1
+            #     obs = test_env.reset()
                 
-                # Fast-forward to current state
-                for _ in range(step + 1):
-                    obs, _, done, _ = test_env.step(np.zeros_like(action))
+            #     # Fast-forward to current state
+            #     for _ in range(step + 1):
+            #         obs, _, done, _ = test_env.step(np.zeros_like(action))
                 
                 # # Optional: Periodically reinforce with original data
                 # if self.retrain_count % 3 == 0:  # Every 3 fine-tunings
