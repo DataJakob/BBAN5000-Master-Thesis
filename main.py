@@ -62,19 +62,19 @@ benchmark.frequency_optimizing()
 # esg_compliancy = [True, True, True, True, False, False, False, False]
 # objectives = ["Sterling", "Return", "Sharpe", "Sortino", "Sterling"]
 # esg_compliancy = [True, False, False, False, False]
-objectives = ["Sharpe"]
-esg_compliancy = [True]
-for i in range(len(objectives)):
-    reinforcement = RLM(esg_scores, 
-                        objective=objectives[i],
-                        history_usage=history_usage_RL,
-                        rolling_reward_window=rolling_reward_window,
-                        total_timesteps=70_000,
-                        esg_compliancy=esg_compliancy[i], 
-                        gen_validation_weights=True
-                        )
-    reinforcement.train_model()
-    reinforcement.predict()
+# objectives = ["Sharpe"]
+# esg_compliancy = [True]
+# for i in range(len(objectives)):
+#     reinforcement = RLM(esg_scores, 
+#                         objective=objectives[i],
+#                         history_usage=history_usage_RL,
+#                         rolling_reward_window=rolling_reward_window,
+#                         total_timesteps=70_000,
+#                         esg_compliancy=esg_compliancy[i], 
+#                         gen_validation_weights=True
+#                         )
+#     reinforcement.train_model()
+#     reinforcement.predict()
 """------------------------------------------------"""
 paths = ["Return_esg_True", "Sharpe_esg_True",
          "Sortino_esg_True","Sterling_esg_True",

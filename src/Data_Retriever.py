@@ -18,7 +18,7 @@ class DataRetriever:
         """
         self.start_date = start_date
         self.end_date = end_date
-        self.ticker_list = np.array(ticker_df).flatten()
+        self.ticker_list = np.array(ticker_df).T.flatten()
 
         self.master_daterange = pd.Series(np.repeat(pd.date_range(start=self.start_date, end=self.end_date, freq="B"), 2), name="Date")
         self.return_df = pd.DataFrame(index=self.master_daterange)
