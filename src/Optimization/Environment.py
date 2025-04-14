@@ -43,7 +43,7 @@ class PortfolioEnvironment(gym.Env):
         
         self.observation_space = spaces.Box(low=-np.inf, 
                                             high=np.inf, 
-                                            shape=(self.n_stocks * 4, self.history_usage),) # * 4
+                                            shape=(self.n_stocks * 1, self.history_usage),) # * 4
 
         self.current_step: int = 0
         self.weights_list: list = []
@@ -89,10 +89,10 @@ class PortfolioEnvironment(gym.Env):
         actual_data = actual_data.iloc[:self.current_step, : ]
 
         if self.current_step <= self.history_usage -1:
-            pad = pd.DataFrame(np.array([np.zeros(self.history_usage-actual_data.shape[0]) for _ in range(72)])) # 72
+            pad = pd.DataFrame(np.array([np.zeros(self.history_usage-actual_data.shape[0]) for _ in range(18)])) # 72
             padded_df = pd.concat([pad.T, actual_data]).reset_index(drop=True)
         elif self.current_step >= (maxlen-1):
-            pad = pd.DataFrame(np.array([np.zeros(maxlen - self.current_step) for _ in range(72)]))   # 72
+            pad = pd.DataFrame(np.array([np.zeros(maxlen - self.current_step) for _ in range(18)]))   # 72
             padded_df = pd.concat([actual_data, pad.T]).reset_index(drop=True)
         else:
             padded_df = actual_data

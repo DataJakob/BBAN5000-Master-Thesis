@@ -112,7 +112,7 @@ class MencheroOGA():
         """
 
         # Contains only the last n-trading observations
-        relevant_return_list = self.returns.iloc[-self.n_optimizations-1:].reset_index(drop=True) 
+        relevant_return_list = self.returns.iloc[-(self.n_optimizations):].reset_index(drop=True) 
 
         allocation_list = []
         selection_list = []

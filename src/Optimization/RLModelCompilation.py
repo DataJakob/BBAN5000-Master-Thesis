@@ -44,7 +44,7 @@ class RL_Model():
         """
         doc string
         """
-        self.stock_info = pd.read_csv("Data/Input.csv")
+        self.stock_info = pd.read_csv("Data/StockReturns.csv")
         self.esg_data = esg_data
 
         self.train_data = None
@@ -142,12 +142,12 @@ class RL_Model():
             },
             learning_rate=linear_schedule(3e-4),
             tau=0.005,
-            gamma=0.99,
+            gamma=0.98,
             buffer_size=60_000,
             batch_size=64,
             gradient_steps=128,
             train_freq=(64, "step"),
-            ent_coef='auto_0.8',
+            ent_coef='auto_1.4',
             target_entropy= -len(self.esg_data),
             learning_starts=5000
         )
@@ -169,19 +169,19 @@ class RL_Model():
         # Dynamic prediction on test set with transfer learning
         test_env = self.create_envs(self.test_data, eval=True)
         obs = test_env.reset()
-        test_env.current_step = 0
         
         weights_history_test = []
-        total_test_steps = len(self.test_data) - self.history_usage
-        print(f"Total test steps: {total_test_steps}")
+        # total_test_steps = len(self.test_data) #- self.history_usage
+        # print(f"Total test steps: {total_test_steps}")
 
         # Transfer learning setup
-        initial_model_path = "temp_initial_model.zip"
-        self.model.save(initial_model_path)  # Save original model
         # original_lr = self.model.learning_rate
         # self.retrain_count = 0
 
-        for step in range(total_test_steps):
+        done = False
+        
+        while done == False:
+        # for step in range(total_test_steps):
             # Predict weights for current step
             action, _ = self.model.predict(obs, deterministic=True)
             weights = action / np.sum(action + 1e-8)
@@ -190,50 +190,10 @@ class RL_Model():
             # Step to next observation
             obs, _, done, _ = test_env.step(action)
             
-            # # Transfer learning-based fine-tuning
-            # if (step + 1) % self.retrain_interval == 0 and (step + 1) < total_test_steps - 10:
-            #     print(f"\nFine-tuning at step {step + 1} of {total_test_steps}")
-                
-            #     # 1. Get only the most recent data for fine-tuning
-            #     start_idx = max(0, step + 1 - self.retrain_interval)
-            #     incremental_data = self.test_data.iloc[start_idx:step + 1]
-                
-            #     # 2. Create small incremental environment
-            #     incremental_env = self.create_envs(incremental_data, eval=False)
-                
-            #     # 3. Configure for fine-tuning
-            #     self.model.learning_rate = original_lr #* 0.2  # Reduced learning rate
-            #     self.model.set_env(incremental_env)
-                
-            #     # 4. Short fine-tuning phase
-            #     self.model.learn(
-            #         total_timesteps=int(self.total_timesteps * 0.3),  # 30% of original
-            #         progress_bar=True
-            #     )
-                
-            #     # Restore original learning rate
-            #     self.model.learning_rate = original_lr
-            #     self.retrain_count += 1
-                
-            #     # 5. Reset test environment
-            #     test_env = self.create_envs(self.test_data, eval=True)
-            #     test_env.current_step = step + 1
-            #     obs = test_env.reset()
-                
-            #     # Fast-forward to current state
-            #     for _ in range(step + 1):
-            #         obs, _, done, _ = test_env.step(np.zeros_like(action))
-                
-                # # Optional: Periodically reinforce with original data
-                # if self.retrain_count % 3 == 0:  # Every 3 fine-tunings
-                #     self._reinforce_with_original_data()
-            
             if done[0]:
+                done = True
                 break
 
-        # Clean up and save results
-        if os.path.exists(initial_model_path):
-            os.remove(initial_model_path)
             
         weights_array = np.array(weights_history_test).squeeze()
         pd.DataFrame(weights_array).to_csv(
@@ -242,27 +202,6 @@ class RL_Model():
         
         print("Dynamic prediction with transfer learning complete.")
 
-    # def _reinforce_with_original_data(self):
-    #     """Periodically retrain with some original data to prevent drift"""
-    #     print("Reinforcing with original training data...")
-        
-    #     # Mix 20% original data with recent observations
-    #     mixed_data = pd.concat([
-    #         self.train_data.sample(frac=0.2),
-    #         self.test_data.iloc[:self.retrain_count * self.retrain_interval].tail(200)
-    #     ])
-        
-    #     mixed_env = self.create_envs(mixed_data, eval=False)
-    #     original_lr = self.model.learning_rate
-        
-    #     # Train with slightly higher learning rate for reinforcement
-    #     self.model.learning_rate = original_lr * 0.5
-    #     self.model.set_env(mixed_env)
-    #     self.model.learn(
-    #         total_timesteps=int(self.total_timesteps * 0.2),
-    #         progress_bar=False
-    #     )
-    #     self.model.learning_rate = original_lr
 
 
     def _generate_weights(self, env, prediction_type):

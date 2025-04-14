@@ -25,7 +25,7 @@ n_sectors = 6
 n_stocks_per_sector = 3
 
 # For RL algorithm
-history_usage_RL = 40
+history_usage_RL = 80
 rolling_reward_window = 40
 """------------------------------------------------"""
 # Defining stock pool
@@ -53,28 +53,30 @@ esg_scores = np.array([
 # # In function below, set log=True to check for data availability
 # data.retrieve_data()
 """------------------------------------------------"""
-# Generate benchmark weights thorugh MPT using Sharpe ratio
-benchmark = MPT(history_usage, trading_n)
-# IMPORTANT: In order to see  the effect of the weights, algo exclude last observation from optimization
-benchmark.frequency_optimizing()
+# # Generate benchmark weights thorugh MPT using Sharpe ratio
+# benchmark = MPT(history_usage, trading_n)
+# # IMPORTANT: In order to see  the effect of the weights, algo exclude last observation from optimization
+# benchmark.frequency_optimizing()
 """------------------------------------------------"""
 # objectives = ["Return", "Sharpe", "Sortino", "Sterling", "Return", "Sharpe", "Sortino", "Sterling"]
 # esg_compliancy = [True, True, True, True, False, False, False, False]
 # objectives = ["Sterling", "Return", "Sharpe", "Sortino", "Sterling"]
 # esg_compliancy = [True, False, False, False, False]
-# objectives = ["Sharpe"]
-# esg_compliancy = [True]
-# for i in range(len(objectives)):
-#     reinforcement = RLM(esg_scores, 
-#                         objective=objectives[i],
-#                         history_usage=history_usage_RL,
-#                         rolling_reward_window=rolling_reward_window,
-#                         total_timesteps=70_000,
-#                         esg_compliancy=esg_compliancy[i], 
-#                         gen_validation_weights=True
-#                         )
-#     reinforcement.train_model()
-#     reinforcement.predict()
+objectives = ["Sharpe"]
+esg_compliancy = [False]
+
+esg_compliancy = [True]
+for i in range(len(objectives)):
+    reinforcement = RLM(esg_scores, 
+                        objective=objectives[i],
+                        history_usage=history_usage_RL,
+                        rolling_reward_window=rolling_reward_window,
+                        total_timesteps=50_000,
+                        esg_compliancy=esg_compliancy[i], 
+                        gen_validation_weights=False
+                        )
+    reinforcement.train_model()
+    reinforcement.predict()
 """------------------------------------------------"""
 paths = ["Return_esg_True", "Sharpe_esg_True",
          "Sortino_esg_True","Sterling_esg_True",

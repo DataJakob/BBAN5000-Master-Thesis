@@ -2,7 +2,7 @@ import numpy as np
 import pandas
 
 
-x = 1
+x = 5
 upper = 30
 lower = 30
 
@@ -11,16 +11,20 @@ def sharpe_ratio(return_window: np.array):
     """
     doc string
     """
+    if len(return_window) <= 2:
+        return 0
+    
     mean = np.mean(return_window)
     stddev = np.std(return_window)
 
     sharpe = mean / (stddev + 1e-8)
-    #sharpe = sharpe * x
-    sharpe = np.clip(sharpe, lower, upper) # Redundant, but gives equality to measurements
+    sharpe = np.clip(sharpe, lower, upper)  # Redundant, but gives equality to measurements
     if np.isnan(sharpe):
         return 0.0 
+    sharpe *= x
+    
 
-    return sharpe  
+    return (sharpe + (return_window[-1] / return_window[-2])*5) / 2
 
 
 
@@ -28,13 +32,12 @@ def return_ratio(return_window: np.array):
     """
     doc string
     """
-    #cumu = (np.cumprod(return_window+1)-1)[-1]
     mean = np.mean(return_window)
-    #mean = mean * x
     mean = np.clip(mean, lower, upper) # Redundant, but gives equality to measurements
 
     if np.isnan(mean):
         return 0.0 
+    mean *= x
 
     return mean 
 
@@ -48,11 +51,10 @@ def sortino_ratio(return_window: np.array):
     downside_risk = np.sqrt(np.mean(np.square(np.minimum(return_window, 0))))
 
     sortino = mean / (downside_risk + 1e-8)
-    #sortino = sortino * x
     sortino = np.clip(sortino, lower, upper) # Currently arbitrary
-
     if np.isnan(sortino):
         return 0.0 
+    # sortino *=  x
 
     return sortino 
 
