@@ -20,13 +20,13 @@ start_time = time.time()
 """------------------------------------------------"""
 # Define necessary non-fixed variables
 trading_n = 800
-history_usage = 521
+history_usage = 1042
 n_sectors = 6
 n_stocks_per_sector = 3
 
 # For RL algorithm
 history_usage_RL = 80
-rolling_reward_window = 20
+rolling_reward_window = 40
 """------------------------------------------------"""
 # Defining stock pool
 ticker_df =  pd.DataFrame({
@@ -48,22 +48,22 @@ esg_scores = np.array([
     21.2, 26.8, 24.9
 ])
 """------------------------------------------------"""
-# # Retrieve data from yf API: y-m-d
-# data = DatRet("2006-07-01", "2024-12-31", ticker_df)
-# # In function below, set log=True to check for data availability
-# data.retrieve_data()
+# Retrieve data from yf API: y-m-d
+data = DatRet("2006-07-01", "2024-12-31", ticker_df)
+# In function below, set log=True to check for data availability
+data.retrieve_data()
 """------------------------------------------------"""
-# # Generate benchmark weights thorugh MPT using Sharpe ratio
-# benchmark = MPT(history_usage, trading_n)
-# # IMPORTANT: In order to see  the effect of the weights, algo exclude last observation from optimization
-# benchmark.frequency_optimizing()
+# Generate benchmark weights thorugh MPT using Sharpe ratio
+benchmark = MPT(history_usage, trading_n)
+# IMPORTANT: In order to see  the effect of the weights, algo exclude last observation from optimization
+benchmark.frequency_optimizing()
 """------------------------------------------------"""
-# objectives = ["Return", "Sharpe", "Sortino", "Sterling", "Return", "Sharpe", "Sortino", "Sterling"]
-# esg_compliancy = [True, True, True, True, False, False, False, False]
+objectives = ["Return", "Sharpe", "Sortino", "Sterling", "Return", "Sharpe", "Sortino", "Sterling"]
+esg_compliancy = [True, True, True, True, False, False, False, False]
 # objectives = ["Return", "Sharpe", "Sterling"]
 # esg_compliancy = [False, False, False]
-objectives = ["Sharpe"]
-esg_compliancy = [True]
+# objectives = ["Sharpe"]
+# esg_compliancy = [True]
 
 
 for i in range(len(objectives)):
@@ -71,7 +71,7 @@ for i in range(len(objectives)):
                         objective=objectives[i],
                         history_usage=history_usage_RL,
                         rolling_reward_window=rolling_reward_window,
-                        total_timesteps=52_000,
+                        total_timesteps=10_000,
                         esg_compliancy=esg_compliancy[i], 
                         gen_validation_weights=True,
                         production=True
@@ -79,11 +79,11 @@ for i in range(len(objectives)):
     reinforcement.train_model()
     reinforcement.predict()
 """------------------------------------------------"""
-# paths = ["Return_esg_True", "Sharpe_esg_True",
-#          "Sortino_esg_True","Sterling_esg_True",
-#          "Return_esg_False", "Sharpe_esg_False",
-#          "Sortino_esg_False","Sterling_esg_False",]
-paths = ["Sortino_esg_False","Return_esg_False", "Sharpe_esg_False", "Sterling_esg_False", "Sharpe_esg_True"]
+paths = ["Return_esg_True", "Sharpe_esg_True",
+         "Sortino_esg_True","Sterling_esg_True",
+         "Return_esg_False", "Sharpe_esg_False",
+         "Sortino_esg_False","Sterling_esg_False",]
+# paths = ["Sortino_esg_False","Return_esg_False", "Sharpe_esg_False", "Sterling_esg_False", "Sharpe_esg_True"]
 
 analysis_list = []
 for i in range(len(paths)):
@@ -98,8 +98,8 @@ for i in range(len(paths)):
     att_anal.friple_frequency_analysis()
     analysis_list.append(att_anal)
 """------------------------------------------------"""
-# theta = RC(analysis_list, trading_n)
-# theta.convey_results()
+theta = RC(analysis_list, trading_n)
+theta.convey_results()
 """------------------------------------------------"""
 elapsed_time = time.time() - start_time
 print(f"Elapsed time: {elapsed_time:.4f} seconds")
