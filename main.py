@@ -48,36 +48,36 @@ esg_scores = np.array([
     21.2, 26.8, 24.9
 ])
 """------------------------------------------------"""
-# Retrieve data from yf API: y-m-d
-data = DatRet("2006-07-01", "2024-12-31", ticker_df)
-# In function below, set log=True to check for data availability
-data.retrieve_data()
+# # Retrieve data from yf API: y-m-d
+# data = DatRet("2006-07-01", "2024-12-31", ticker_df)
+# # In function below, set log=True to check for data availability
+# data.retrieve_data()
 """------------------------------------------------"""
-# Generate benchmark weights thorugh MPT using Sharpe ratio
-benchmark = MPT(history_usage, trading_n)
-# IMPORTANT: In order to see  the effect of the weights, algo exclude last observation from optimization
-benchmark.frequency_optimizing()
+# # Generate benchmark weights thorugh MPT using Sharpe ratio
+# benchmark = MPT(history_usage, trading_n)
+# # IMPORTANT: In order to see  the effect of the weights, algo exclude last observation from optimization
+# benchmark.frequency_optimizing()
 """------------------------------------------------"""
-objectives = ["Return", "Sharpe", "Sortino", "Sterling", "Return", "Sharpe", "Sortino", "Sterling"]
-esg_compliancy = [True, True, True, True, False, False, False, False]
-# objectives = ["Return", "Sharpe", "Sterling"]
-# esg_compliancy = [False, False, False]
-# objectives = ["Sharpe"]
-# esg_compliancy = [True]
+# objectives = ["Return", "Sharpe", "Sortino", "Sterling", "Return", "Sharpe", "Sortino", "Sterling"]
+# esg_compliancy = [True, True, True, True, False, False, False, False]
+# # objectives = ["Return", "Sharpe", "Sterling"]
+# # esg_compliancy = [False, False, False]
+# # objectives = ["Sharpe"]
+# # esg_compliancy = [True]
 
 
-for i in range(len(objectives)):
-    reinforcement = RLM(esg_scores, 
-                        objective=objectives[i],
-                        history_usage=history_usage_RL,
-                        rolling_reward_window=rolling_reward_window,
-                        total_timesteps=10_000,
-                        esg_compliancy=esg_compliancy[i], 
-                        gen_validation_weights=True,
-                        production=True
-                        )
-    reinforcement.train_model()
-    reinforcement.predict()
+# for i in range(len(objectives)):
+#     reinforcement = RLM(esg_scores, 
+#                         objective=objectives[i],
+#                         history_usage=history_usage_RL,
+#                         rolling_reward_window=rolling_reward_window,
+#                         total_timesteps=10_000,
+#                         esg_compliancy=esg_compliancy[i], 
+#                         gen_validation_weights=True,
+#                         production=True
+#                         )
+#     reinforcement.train_model()
+#     reinforcement.predict()
 """------------------------------------------------"""
 paths = ["Return_esg_True", "Sharpe_esg_True",
          "Sortino_esg_True","Sterling_esg_True",

@@ -58,7 +58,7 @@ class ResultConveyor():
 
 
     def financial_table(self):
-        returns = [self.analysis_list[0].exper_analysis["bench_return"]] + [self.analysis_list[i].exper_analysis["active_return"] for i in range(8)]
+        returns = [self.analysis_list[i].exper_analysis["return"] for i in range(8)]
         txt = ["Benchmark","Ret_ESG","Sha_ESG","Sor_ESG", "Ste_ESG", "Ret", "Sha", "Sor", "Ste"]
         financial_df = pd.DataFrame()
         financial_df["Measurement"] = ["P/L", "Sharpe", "Sortino", "Sterling"]
@@ -102,7 +102,7 @@ class ResultConveyor():
                 return 0.0
             return total_return / avg_drawdown
         
-        for i in range(9):
+        for i in range(8):
             financial_df[str(txt[i])] = [_calculate_PL(returns[i]),
                                         _calculate_sharpe(returns[i], 0.0),
                                         _calculate_sortino(returns[i], 0.0),
