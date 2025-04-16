@@ -18,13 +18,12 @@ def sharpe_ratio(return_window: np.array):
     stddev = np.std(return_window)
 
     sharpe = mean / (stddev + 1e-8)
-    sharpe = np.clip(sharpe, lower, upper)  # Redundant, but gives equality to measurements
+    sharpe = np.clip(sharpe, lower, upper) 
     if np.isnan(sharpe):
         return 0.0 
     sharpe *= x
     
-
-    return (sharpe + (return_window[-1] / return_window[-2])*5) / 2
+    return (sharpe  +((return_window[-1]/return_window[-2])*100) / 2)
 
 
 
@@ -32,14 +31,15 @@ def return_ratio(return_window: np.array):
     """
     doc string
     """
+    if len(return_window) < 2:
+        return 0
     mean = np.mean(return_window)
-    mean = np.clip(mean, lower, upper) # Redundant, but gives equality to measurements
+    mean = np.clip(mean, lower, upper) 
 
     if np.isnan(mean):
         return 0.0 
-    mean *= x
-
-    return mean 
+    mean *= 100
+    return (mean + ((return_window[-1]/return_window[-2])*100) / 2)
 
 
 
@@ -47,6 +47,8 @@ def sortino_ratio(return_window: np.array):
     """
     doc string
     """
+    if len(return_window) < 2:
+        return 0  
     mean = np.mean(return_window)
     downside_risk = np.sqrt(np.mean(np.square(np.minimum(return_window, 0))))
 
@@ -56,13 +58,15 @@ def sortino_ratio(return_window: np.array):
         return 0.0 
     # sortino *=  x
 
-    return sortino 
+    return (sortino + ((return_window[-1]/return_window[-2])*100) / 2)
 
 
 def sterling_ratio(return_window: np.array):
     """ 
     doc string 
     """
+    if len(return_window) < 2:
+        return 0
     mean = np.mean(return_window)
 
     cumu = (np.cumprod(return_window +1))
@@ -82,7 +86,7 @@ def sterling_ratio(return_window: np.array):
     if np.isnan(sterling):
         return 0.0 
 
-    return sterling 
+    return (sterling + ((return_window[-1]/return_window[-2])*100) / 2)
 
 
 def penalise_reward(reward, esg_score):

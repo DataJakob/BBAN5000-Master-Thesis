@@ -9,9 +9,9 @@ from src.Optimization.Environment import PortfolioEnvironment as PorEnv
 from src.Optimization.RLModelCompilation import RL_Model as RLM
 # from src.Optimization.NeuralNet import CustomCNNExtractor 
 
-from src.Result.Menchero_OGA import MencheroOGA as MOGA
-from src.Result.IndPortResults import GenerateResult as GR
-from src.Result.OverviewResults import ResultConveyor as RC
+from src.Analysis.Menchero_OGA import MencheroOGA as MOGA
+from src.Analysis.IndPortResults import GenerateResult as GR
+from src.Analysis.OverviewResults import ResultConveyor as RC
 
 import time
 
@@ -19,14 +19,14 @@ import time
 start_time = time.time()
 """------------------------------------------------"""
 # Define necessary non-fixed variables
-trading_n = 400
+trading_n = 800
 history_usage = 521
 n_sectors = 6
 n_stocks_per_sector = 3
 
 # For RL algorithm
 history_usage_RL = 80
-rolling_reward_window = 40
+rolling_reward_window = 20
 """------------------------------------------------"""
 # Defining stock pool
 ticker_df =  pd.DataFrame({
@@ -49,7 +49,7 @@ esg_scores = np.array([
 ])
 """------------------------------------------------"""
 # # Retrieve data from yf API: y-m-d
-# data = DatRet("2006-07-01", "2025-03-31", ticker_df)
+# data = DatRet("2006-07-01", "2024-12-31", ticker_df)
 # # In function below, set log=True to check for data availability
 # data.retrieve_data()
 """------------------------------------------------"""
@@ -60,28 +60,30 @@ esg_scores = np.array([
 """------------------------------------------------"""
 # objectives = ["Return", "Sharpe", "Sortino", "Sterling", "Return", "Sharpe", "Sortino", "Sterling"]
 # esg_compliancy = [True, True, True, True, False, False, False, False]
-# objectives = ["Sterling", "Return", "Sharpe", "Sortino", "Sterling"]
-# esg_compliancy = [True, False, False, False, False]
+# objectives = ["Return", "Sharpe", "Sterling"]
+# esg_compliancy = [False, False, False]
 objectives = ["Sharpe"]
-esg_compliancy = [False]
-
 esg_compliancy = [True]
+
+
 for i in range(len(objectives)):
     reinforcement = RLM(esg_scores, 
                         objective=objectives[i],
                         history_usage=history_usage_RL,
                         rolling_reward_window=rolling_reward_window,
-                        total_timesteps=50_000,
+                        total_timesteps=52_000,
                         esg_compliancy=esg_compliancy[i], 
-                        gen_validation_weights=False
+                        gen_validation_weights=True,
+                        production=True
                         )
     reinforcement.train_model()
     reinforcement.predict()
 """------------------------------------------------"""
-paths = ["Return_esg_True", "Sharpe_esg_True",
-         "Sortino_esg_True","Sterling_esg_True",
-         "Return_esg_False", "Sharpe_esg_False",
-         "Sortino_esg_False","Sterling_esg_False",]
+# paths = ["Return_esg_True", "Sharpe_esg_True",
+#          "Sortino_esg_True","Sterling_esg_True",
+#          "Return_esg_False", "Sharpe_esg_False",
+#          "Sortino_esg_False","Sterling_esg_False",]
+paths = ["Sortino_esg_False","Return_esg_False", "Sharpe_esg_False", "Sterling_esg_False", "Sharpe_esg_True"]
 
 analysis_list = []
 for i in range(len(paths)):
@@ -96,8 +98,8 @@ for i in range(len(paths)):
     att_anal.friple_frequency_analysis()
     analysis_list.append(att_anal)
 """------------------------------------------------"""
-theta = RC(analysis_list, trading_n)
-theta.convey_results()
+# theta = RC(analysis_list, trading_n)
+# theta.convey_results()
 """------------------------------------------------"""
 elapsed_time = time.time() - start_time
 print(f"Elapsed time: {elapsed_time:.4f} seconds")

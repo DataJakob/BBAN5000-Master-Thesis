@@ -40,11 +40,12 @@ class RL_Model():
                  total_timesteps: int, 
                  esg_compliancy: bool,
                  gen_validation_weights: bool,
+                 production:bool,
                  seed: int =42):
         """
         doc string
         """
-        self.stock_info = pd.read_csv("Data/StockReturns.csv")
+        self.stock_info = pd.read_csv("Data/Input.csv")
         self.esg_data = esg_data
 
         self.train_data = None
@@ -59,6 +60,7 @@ class RL_Model():
         self.total_timesteps = total_timesteps
         self.esg_compliancy = esg_compliancy
         self.gen_validation_weights = gen_validation_weights
+        self.production = production
 
         self.seed = seed
         self.retrain_interval: int = 80
@@ -100,16 +102,20 @@ class RL_Model():
 
     def train_model(self):
         # Data splitting
-        self.train_data = self.stock_info.iloc[:int(0.9*len(self.stock_info))]
-        self.valid_data = self.stock_info.iloc[int(0.9*len(self.stock_info)) : int(0.95083*len(self.stock_info))].reset_index(drop=True)
-        self.test_data = self.stock_info.iloc[int(0.95083*len(self.stock_info)):].reset_index(drop=True)
+        self.train_data = self.stock_info.iloc[:int(0.8*len(self.stock_info))]
+        self.valid_data = self.stock_info.iloc[int(0.8*len(self.stock_info)) : int(0.9*len(self.stock_info))].reset_index(drop=True)
+        self.test_data = self.stock_info.iloc[int(0.9*len(self.stock_info)):].reset_index(drop=True)
         
         # Initial environments
         self.train_env = self.create_envs(self.train_data, eval=False)
-        self.valid_env = self.create_envs(self.valid_data, eval=False)
+        self.valid_env = self.create_envs(self.valid_data, eval=True)
 
-        # Initialize model with initial training data
-        self.model = self.initialize_model(self.train_env)
+        self.production_env = self.create_envs(self.stock_info.iloc[:int(0.9*(len(self.stock_info)))])
+
+        if self.production == False:
+            self.model = self.initialize_model(self.train_env)
+        else: 
+            self.model = self.initialize_model(self.production_env)
         
         # Initial training
         self.model.learn(
@@ -135,21 +141,22 @@ class RL_Model():
             policy="MlpPolicy",
             env=env,
             verbose=1,
+
             policy_kwargs={
-                "net_arch": [256, 256],
+                "net_arch": [180, 180],
                 "use_sde": True,
                 "log_std_init": 0.0,
             },
             learning_rate=linear_schedule(3e-4),
             tau=0.005,
-            gamma=0.98,
+            gamma=0.99,
             buffer_size=60_000,
             batch_size=64,
             gradient_steps=128,
             train_freq=(64, "step"),
             ent_coef='auto_1.4',
             target_entropy= -len(self.esg_data),
-            learning_starts=5000
+            learning_starts=100
         )
         return model
 
@@ -214,14 +221,23 @@ class RL_Model():
         done = False
         
         while not done:
+        
             action, _ = self.model.predict(obs, deterministic=True)
             weights = action / np.sum(action + 1e-8)
-            obs, _, done, _ = env.step(action)
-            done = done[0]
             weights_history.append(weights)
-            
-            if done:
-                break
+            obs, _, done, _ = env.step(action)
+
+            if prediction_type == "TrainPredictions":
+                done = done[0]
+                if done == True:
+                    break
+            elif prediction_type == "ValidPredictions":
+                done = done
+                if done[0]==True:
+                    break
+            else:
+                pass
+
         
         weights_array = np.array(weights_history).mean(axis=1)
         pd.DataFrame(weights_array).to_csv(

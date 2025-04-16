@@ -95,10 +95,12 @@ class MarkowitzPT():
             data_per_time_interval = self.data.iloc[-(self.history_usage+self.n_optimizations+1+time):-(self.n_optimizations+1+time)]
             sliced_data.append(data_per_time_interval)
 
+        counter = 0
         frequency_weights_list = []
-        for y in range(0, self.n_optimizations,1): # self.n_optimzations
-  
-            ind_weights = self.optimize_portfolio(sliced_data[y])
+        for y in range(0, self.n_optimizations,1): 
+            if (y % 200) == 0: 
+                counter = y     # Rebalancing every second months
+            ind_weights = self.optimize_portfolio(sliced_data[counter])
             frequency_weights_list.append(ind_weights)
         self.frequency_weights = frequency_weights_list
 

@@ -28,7 +28,7 @@ class PortfolioEnvironment(gym.Env):
 
         Good, initialize all variables with values 
         """
-        self.return_data = return_data.values
+        self.return_data = return_data.iloc[:,:18].values
         self.esg_data: np.array = esg_data
         self.history_usage: int = history_usage
         self.rolling_reward_window: int = rolling_reward_window
@@ -43,7 +43,8 @@ class PortfolioEnvironment(gym.Env):
         
         self.observation_space = spaces.Box(low=-np.inf, 
                                             high=np.inf, 
-                                            shape=(self.n_stocks * 1, self.history_usage),) # * 4
+                                            shape=(self.n_stocks * 1, 
+                                                   self.history_usage),) # * 4
 
         self.current_step: int = 0
         self.weights_list: list = []
@@ -110,6 +111,7 @@ class PortfolioEnvironment(gym.Env):
         # Generate weights based on actions
 
         current_weights = action / np.sum(action+1e-8)
+        # current_weights = action / np.sum(np.abs(action))
         self.weights_list.append(current_weights)
         
         if self.current_step >= int(self.return_data.shape[0]-1):  # >= instead of == for safety
