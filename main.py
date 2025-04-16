@@ -20,7 +20,7 @@ start_time = time.time()
 """------------------------------------------------"""
 # Define necessary non-fixed variables
 trading_n = 800
-history_usage = 1042
+history_usage = int(521)
 n_sectors = 6
 n_stocks_per_sector = 3
 
@@ -53,15 +53,15 @@ esg_scores = np.array([
 # # In function below, set log=True to check for data availability
 # data.retrieve_data()
 """------------------------------------------------"""
-# # Generate benchmark weights thorugh MPT using Sharpe ratio
-# benchmark = MPT(history_usage, trading_n)
-# # IMPORTANT: In order to see  the effect of the weights, algo exclude last observation from optimization
-# benchmark.frequency_optimizing()
+# Generate benchmark weights thorugh MPT using Sharpe ratio
+benchmark = MPT(history_usage, trading_n)
+# IMPORTANT: In order to see  the effect of the weights, algo exclude last observation from optimization
+benchmark.frequency_optimizing()
 """------------------------------------------------"""
-# objectives = ["Return", "Sharpe", "Sortino", "Sterling", "Return", "Sharpe", "Sortino", "Sterling"]
-# esg_compliancy = [True, True, True, True, False, False, False, False]
-# # objectives = ["Return", "Sharpe", "Sterling"]
-# # esg_compliancy = [False, False, False]
+# objectives = [ "Sortino", "Sterling"]
+# esg_compliancy = [False, False]
+# objectives = ["Return", "Sharpe"]
+# esg_compliancy = [True, True]
 # # objectives = ["Sharpe"]
 # # esg_compliancy = [True]
 
@@ -71,7 +71,7 @@ esg_scores = np.array([
 #                         objective=objectives[i],
 #                         history_usage=history_usage_RL,
 #                         rolling_reward_window=rolling_reward_window,
-#                         total_timesteps=10_000,
+#                         total_timesteps=25_000,
 #                         esg_compliancy=esg_compliancy[i], 
 #                         gen_validation_weights=True,
 #                         production=True

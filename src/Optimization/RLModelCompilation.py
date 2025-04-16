@@ -143,7 +143,7 @@ class RL_Model():
             verbose=1,
 
             policy_kwargs={
-                "net_arch": [128, 128],
+                "net_arch": [256, 256],
                 "use_sde": True,
                 "log_std_init": 0.0,
             },

@@ -65,7 +65,7 @@ class ResultConveyor():
 
         def _calculate_PL(returns):
             """Calculate P/L"""
-            return returns[-1] -1 
+            return round((returns[-1] -1)*100,2)
 
         def _calculate_sharpe(returns, risk_free_rate):
             """Calculate annualized Sharpe Ratio"""
@@ -75,7 +75,7 @@ class ResultConveyor():
             std_excess = np.std(excess_returns)
             if std_excess == 0:
                 return 0.0
-            return mean_excess / std_excess 
+            return round(mean_excess / std_excess,3)
 
         def _calculate_sortino(returns, risk_free_rate):
             """Calculate annualized Sortino Ratio"""
@@ -88,7 +88,7 @@ class ResultConveyor():
             downside_std = np.std(downside_returns)
             if downside_std == 0:
                 return 0.0
-            return mean_excess / downside_std 
+            return round(mean_excess / downside_std,3)
 
         def _calculate_sterling(cumulative_returns):
             """Calculate Sterling Ratio"""
@@ -100,7 +100,7 @@ class ResultConveyor():
             total_return = cumulative_returns[-1] - 1 
             if avg_drawdown == 0:
                 return 0.0
-            return total_return / avg_drawdown
+            return round(total_return / avg_drawdown,3)
         
         for i in range(8):
             financial_df[str(txt[i])] = [_calculate_PL(returns[i]),
@@ -137,9 +137,9 @@ class ResultConveyor():
         counter = 0
         for item in self.analysis_list:
             esg_scores = item.exper_analysis["esg_score"]
-            avg_esg = np.mean(esg_scores)
+            avg_esg = round(np.mean(esg_scores), 2)
             correlation, p_value = pearsonr(esg_scores, item.exper_analysis["return"])
-            esg_df[txt[counter]] = [avg_esg, correlation, p_value]
+            esg_df[txt[counter]] = [avg_esg, round(correlation, 3), p_value]
             counter += 1
 
         esg_df.to_csv("Results/esg_table.csv", index=False)

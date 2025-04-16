@@ -98,13 +98,16 @@ class MarkowitzPT():
         counter = 0
         frequency_weights_list = []
         for y in range(0, self.n_optimizations,1): 
+            # print(frequency_weights_list)
             if (y % 200) == 0: 
                 counter = y     # Rebalancing every second months
-            ind_weights = self.optimize_portfolio(sliced_data[counter])
+                ind_weights = self.optimize_portfolio(sliced_data[counter])[0]
+            else: 
+                ind_weights = frequency_weights_list[-1] * (1+self.data.iloc[-(self.history_usage+self.n_optimizations)+y]) 
             frequency_weights_list.append(ind_weights)
         self.frequency_weights = frequency_weights_list
 
-        only_weights = pd.DataFrame([self.frequency_weights[i][0] for i in range(self.n_optimizations)]) # first index = 0 or i
+        only_weights = pd.DataFrame([self.frequency_weights[i] for i in range(self.n_optimizations)]) # first index = 0 or i
         only_weights.to_csv('Data/MPT_weights.csv', index=False)
         
         print("--Frequency trading using MPT successfully performed--")
