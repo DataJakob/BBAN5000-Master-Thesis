@@ -59,7 +59,7 @@ class ResultConveyor():
 
     def financial_table(self):
         returns = [self.analysis_list[i].exper_analysis["return"] for i in range(8)]
-        txt = ["Benchmark","Ret_ESG","Sha_ESG","Sor_ESG", "Ste_ESG", "Ret", "Sha", "Sor", "Ste"]
+        txt = ["Ret_ESG","Sha_ESG","Sor_ESG", "Ste_ESG", "Ret", "Sha", "Sor", "Ste"]
         financial_df = pd.DataFrame()
         financial_df["Measurement"] = ["P/L", "Sharpe", "Sortino", "Sterling"]
 
