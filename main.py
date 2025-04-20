@@ -7,7 +7,6 @@ from src.Optimization.Markowitz_PT import MarkowitzPT as MPT
 
 from src.Optimization.Environment import PortfolioEnvironment as PorEnv
 from src.Optimization.RLModelCompilation import RL_Model as RLM
-# from src.Optimization.NeuralNet import CustomCNNExtractor 
 
 from src.Analysis.Menchero_OGA import MencheroOGA as MOGA
 from src.Analysis.IndPortResults import GenerateResult as GR
@@ -53,31 +52,31 @@ esg_scores = np.array([
 # # In function below, set log=True to check for data availability
 # data.retrieve_data()
 """------------------------------------------------"""
-# Generate benchmark weights thorugh MPT using Sharpe ratio
-benchmark = MPT(history_usage, trading_n)
-# IMPORTANT: In order to see  the effect of the weights, algo exclude last observation from optimization
-benchmark.frequency_optimizing()
+# # Generate benchmark weights thorugh MPT using Sharpe ratio
+# benchmark = MPT(history_usage, trading_n)
+# # IMPORTANT: In order to see  the effect of the weights, algo exclude last observation from optimization
+# benchmark.frequency_optimizing()
 """------------------------------------------------"""
 # objectives = [ "Sortino", "Sterling"]
 # esg_compliancy = [False, False]
 # objectives = ["Return", "Sharpe"]
 # esg_compliancy = [True, True]
-# # objectives = ["Sharpe"]
-# # esg_compliancy = [True]
+objectives = ["Sharpe"]
+esg_compliancy = [ False]
 
 
-# for i in range(len(objectives)):
-#     reinforcement = RLM(esg_scores, 
-#                         objective=objectives[i],
-#                         history_usage=history_usage_RL,
-#                         rolling_reward_window=rolling_reward_window,
-#                         total_timesteps=25_000,
-#                         esg_compliancy=esg_compliancy[i], 
-#                         gen_validation_weights=True,
-#                         production=True
-#                         )
-#     reinforcement.train_model()
-#     reinforcement.predict()
+for i in range(len(objectives)):
+    reinforcement = RLM(esg_scores, 
+                        objective=objectives[i],
+                        history_usage=history_usage_RL,
+                        rolling_reward_window=rolling_reward_window,
+                        total_timesteps=100_000,
+                        esg_compliancy=esg_compliancy[i], 
+                        gen_validation_weights=True,
+                        production=True
+                        )
+    reinforcement.train_model()
+    reinforcement.predict()
 """------------------------------------------------"""
 paths = ["Return_esg_True", "Sharpe_esg_True",
          "Sortino_esg_True","Sterling_esg_True",

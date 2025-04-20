@@ -101,7 +101,8 @@ class MarkowitzPT():
             # print(frequency_weights_list)
             if (y % 200) == 0: 
                 counter = y     # Rebalancing every second months
-                ind_weights = self.optimize_portfolio(sliced_data[counter])[0]
+                # ind_weights = self.optimize_portfolio(sliced_data[counter])[0]
+                ind_weights = np.ones(18)/18
             else: 
                 ind_weights = frequency_weights_list[-1] * (1+self.data.iloc[-(self.history_usage+self.n_optimizations)+y]) 
             frequency_weights_list.append(ind_weights)

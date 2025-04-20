@@ -14,16 +14,17 @@ def sharpe_ratio(return_window: np.array):
     if len(return_window) <= 2:
         return 0
     
-    mean = np.mean(return_window)
-    stddev = np.std(return_window)
+    # mean = np.mean(return_window)
+    # stddev = np.std(return_window)
 
-    sharpe = mean / (stddev + 1e-8)
-    sharpe = np.clip(sharpe, lower, upper) 
-    if np.isnan(sharpe):
-        return 0.0 
-    sharpe *= x
+    # sharpe = mean / (stddev + 1e-8)
+    # sharpe = np.clip(sharpe, lower, upper) 
+    # if np.isnan(sharpe):
+    #     return 0.0 
+    # sharpe *= x
     
-    return (sharpe  +((return_window[-1]/return_window[-2])*100) / 2)
+    # return sharpe
+    return (return_window[-1] / return_window[-2]) *100
 
 
 
@@ -39,7 +40,8 @@ def return_ratio(return_window: np.array):
     if np.isnan(mean):
         return 0.0 
     mean *= 100
-    return (mean + ((return_window[-1]/return_window[-2])*100) / 2)
+    return mean
+    # return (mean + ((return_window[-1]/return_window[-2])*100) / 2)
 
 
 
