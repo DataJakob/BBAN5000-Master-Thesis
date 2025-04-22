@@ -38,8 +38,6 @@ class GenerateResult():
 
 
     def plot_values(self,algo_name, pa, ps, ar, er,br,esg):
-        pap = [np.prod(pa[i]+1) for i in range(len(pa))]
-        psp = [np.prod(ps[i]+1) for i in range(len(ps))]
 
         bigfig, ax = plt.subplots(3,2,figsize=(10,10))
         ax[0,0].plot(br, color="grey", label="Benchmark")
@@ -53,15 +51,17 @@ class GenerateResult():
         ax[0,0].set_title('General Portfolio Performance')
         ax[0,0].legend()
 
-        data_arrays = [pap, psp]
+        pap = [np.prod(pa[i]+1) for i in range(len(pa))]
+        psp = [np.prod(ps[i]+1) for i in range(len(ps))]
+        data_arrays = [np.array(pap)-1, np.array(psp)-1]
         data_labels = ["Allocation", "Selection"]
         ax[0,1].boxplot(data_arrays, tick_labels=data_labels)
-        ax[0,1].axhline(y=1, color="black")
+        ax[0,1].axhline(y=0, color="black")
         ax[0,1].set_ylabel("Return")
         ax[0,1].set_title('Attribution Effect Variation')
 
         ax[1,0].scatter(x=esg, y=pd.Series(er).pct_change(),
-                        s= 12,
+                        s= 12, alpha=.3,
                         color="black")
         ax[1,0].set_xlabel("Average ESG score")
         ax[1,0].set_ylabel("Portfolio Return")

@@ -57,12 +57,8 @@ esg_scores = np.array([
 # # IMPORTANT: In order to see  the effect of the weights, algo exclude last observation from optimization
 # benchmark.frequency_optimizing()
 """------------------------------------------------"""
-# objectives = [ "Sortino", "Sterling"]
-# esg_compliancy = [False, False]
-# objectives = ["Return", "Sharpe"]
-# esg_compliancy = [True, True]
-objectives = ["Sharpe"]
-esg_compliancy = [ False]
+objectives = ["Sharpe", "Sharpe"]
+esg_compliancy = [False, True]
 
 
 for i in range(len(objectives)):
@@ -70,7 +66,7 @@ for i in range(len(objectives)):
                         objective=objectives[i],
                         history_usage=history_usage_RL,
                         rolling_reward_window=rolling_reward_window,
-                        total_timesteps=100_000,
+                        total_timesteps=150_000,
                         esg_compliancy=esg_compliancy[i], 
                         gen_validation_weights=True,
                         production=True

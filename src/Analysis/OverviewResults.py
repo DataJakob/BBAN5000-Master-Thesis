@@ -70,6 +70,7 @@ class ResultConveyor():
         def _calculate_sharpe(returns, risk_free_rate):
             """Calculate annualized Sharpe Ratio"""
             returns = returns -1
+            # print(returns)
             excess_returns = returns - risk_free_rate
             mean_excess = np.mean(excess_returns)
             std_excess = np.std(excess_returns)
@@ -82,13 +83,10 @@ class ResultConveyor():
             returns = returns -1
             excess_returns = returns - risk_free_rate
             mean_excess = np.mean(excess_returns)
-            downside_returns = excess_returns[excess_returns < 0]
-            if len(downside_returns) == 0:
+            downside_risk = np.sqrt(np.mean(np.square(np.minimum(excess_returns, 0))))
+            if len(downside_risk) == 0:
                 return 0.0
-            downside_std = np.std(downside_returns)
-            if downside_std == 0:
-                return 0.0
-            return round(mean_excess / downside_std,3)
+            return round(mean_excess / downside_risk,3)
 
         def _calculate_sterling(cumulative_returns):
             """Calculate Sterling Ratio"""
