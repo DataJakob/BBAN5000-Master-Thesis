@@ -1,5 +1,7 @@
 <h1>BBAN5000-Master-Thesis</h1>
 <br>
+<b>Contributors:</b>
+<p> Jakob Lindstrøm & Marcus Hjertaas </p>
 
 <h2> Table of Content</h2>
 <ul>

@@ -84,21 +84,45 @@ class ResultConveyor():
             excess_returns = returns - risk_free_rate
             mean_excess = np.mean(excess_returns)
             downside_risk = np.sqrt(np.mean(np.square(np.minimum(excess_returns, 0))))
-            if len(downside_risk) == 0:
-                return 0.0
+            # if len(downside_risk) == 0:
+            #     return 0.0
             return round(mean_excess / downside_risk,3)
 
-        def _calculate_sterling(cumulative_returns):
-            """Calculate Sterling Ratio"""
-            peak = np.maximum.accumulate(cumulative_returns)
-            drawdowns = (peak - cumulative_returns) / (peak + 1e-10) 
-            if len(drawdowns) == 0:
-                return 0.0
-            avg_drawdown = np.mean(drawdowns)
-            total_return = cumulative_returns[-1] - 1 
-            if avg_drawdown == 0:
-                return 0.0
-            return round(total_return / avg_drawdown,3)
+        def _calculate_sterling(returns: list):
+            """
+            Sterling ratio calculator
+            """
+            
+            periodic_return = returns[-1] -1
+
+            all_drawdown = []
+            ind_drawdown = []
+            for i in range(0, len(returns), 1):
+                if returns[i] < 1:
+                    ind_drawdown.append(returns[i])
+                    if i == len(returns) - 1:
+                        all_drawdown.append(ind_drawdown)
+                else:
+                    if len(ind_drawdown) == 0:
+                        pass
+                    else:
+                        all_drawdown.append(ind_drawdown)
+                        ind_drawdown = []
+
+            prod_drawdowns = np.abs(np.array([np.cumprod(all_drawdown[i])[-1] for i in range(len(all_drawdown))])-1)
+
+
+            if -int(len(prod_drawdowns) *0.1) == 0:
+                idx = len(prod_drawdowns)
+            else: 
+                idx= -int(len(prod_drawdowns) * 0.1)
+            avg_drawdown = np.mean(np.sort(prod_drawdowns)[::][:idx])
+            # print(periodic_return)
+            # print(avg_drawdown)
+
+            sterling_ratio = periodic_return / avg_drawdown
+
+            return round(sterling_ratio,3)
         
         for i in range(8):
             financial_df[str(txt[i])] = [_calculate_PL(returns[i]),
@@ -120,9 +144,9 @@ class ResultConveyor():
             all_std = np.std([np.prod(item.exper_analysis["sector_allocation"][i]+1) for i in range(self.n_optimizations)])
             sel_mean = np.mean(item.exper_analysis["sector_selection"])
             sel_std = np.std([np.prod(item.exper_analysis["sector_selection"][i]+1) for i in range(self.n_optimizations)])
-            active_df[str(txt[counter])] = [ar, 
-                                            all_mean, all_std,
-                                            sel_mean, sel_std]
+            active_df[str(txt[counter])] = [np.round((np.array(ar)-1)*100,3), 
+                                            np.round(all_mean*1000000,3), np.round(all_std,5),
+                                            np.round(sel_mean*1000000,3), np.round(sel_std,5)]
             counter+=1
         active_df.to_csv("Results/active_df.csv", index=False)
 
@@ -137,7 +161,7 @@ class ResultConveyor():
             esg_scores = item.exper_analysis["esg_score"]
             avg_esg = round(np.mean(esg_scores), 2)
             correlation, p_value = pearsonr(esg_scores, item.exper_analysis["return"])
-            esg_df[txt[counter]] = [avg_esg, round(correlation, 3), p_value]
+            esg_df[txt[counter]] = [avg_esg, round(correlation, 3), round(p_value,3)]
             counter += 1
 
         esg_df.to_csv("Results/esg_table.csv", index=False)
