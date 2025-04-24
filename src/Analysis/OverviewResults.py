@@ -139,10 +139,10 @@ class ResultConveyor():
 
         counter= 0
         for item in self.analysis_list:
-            ar = item.exper_analysis["active_return"][-1]
-            all_mean = np.mean(item.exper_analysis["sector_allocation"])
+            ar = np.median(item.exper_analysis["active_return"]) #[-1]
+            all_mean = np.median(item.exper_analysis["sector_allocation"])
             all_std = np.std([np.prod(item.exper_analysis["sector_allocation"][i]+1) for i in range(self.n_optimizations)])
-            sel_mean = np.mean(item.exper_analysis["sector_selection"])
+            sel_mean = np.median(item.exper_analysis["sector_selection"])
             sel_std = np.std([np.prod(item.exper_analysis["sector_selection"][i]+1) for i in range(self.n_optimizations)])
             active_df[str(txt[counter])] = [np.round((np.array(ar)-1)*100,3), 
                                             np.round(all_mean*1000000,3), np.round(all_std,5),

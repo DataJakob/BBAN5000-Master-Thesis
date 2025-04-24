@@ -52,10 +52,10 @@ esg_scores = np.array([
 # # In function below, set log=True to check for data availability
 # data.retrieve_data()
 """------------------------------------------------"""
-# Generate benchmark weights thorugh MPT using Sharpe ratio
-benchmark = MPT(history_usage, trading_n)
-# IMPORTANT: In order to see  the effect of the weights, algo exclude last observation from optimization
-benchmark.frequency_optimizing()
+# # Generate benchmark weights thorugh MPT using Sharpe ratio
+# benchmark = MPT(history_usage, trading_n)
+# # IMPORTANT: In order to see  the effect of the weights, algo exclude last observation from optimization
+# benchmark.frequency_optimizing()
 """------------------------------------------------"""
 # objectives = ["Return", "Return"]
 # esg_compliancy = [False, True]
