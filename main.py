@@ -1,3 +1,4 @@
+# Import libraries and custom modules
 import numpy as np
 import pandas as pd
 
@@ -13,21 +14,23 @@ from src.Analysis.IndPortResults import GenerateResult as GR
 from src.Analysis.OverviewResults import ResultConveyor as RC
 
 import time
-
 """------------------------------------------------"""
+# Start timer
 start_time = time.time()
 """------------------------------------------------"""
-# Define necessary non-fixed variables
-trading_n = 800
-history_usage = int(521*4)
+# Define variables for securitiy pool
 n_sectors = 6
 n_stocks_per_sector = 3
+
+# Define variables for benchmark
+trading_n = 800
+history_usage = int(521*4)
 
 # For RL algorithm
 history_usage_RL = 80
 rolling_reward_window = 40
 """------------------------------------------------"""
-# Defining stock pool
+# Defining security pool
 ticker_df =  pd.DataFrame({
     "Petroleum": ["EQNR.OL", "SUBC.OL", "BWO.OL"],
     "Food": ["ORK.OL", "MOWI.OL", "LSG.OL"],
@@ -41,44 +44,51 @@ ticker_df =  pd.DataFrame({
 esg_scores = np.array([
     36.6, 17.9, 18, 
     18, 23.2, 29.2, 
-    15.7, 25.4, 25.6, # Del this
+    15.7, 25.4, 25.6, 
     19.8, 13.8, 18.1, 
     17.3, 14, 12.3, 
     21.2, 26.8, 24.9
 ])
 """------------------------------------------------"""
-# # Retrieve data from yf API: y-m-d
-# data = DatRet("2006-07-01", "2024-12-31", ticker_df)
-# # In function below, set log=True to check for data availability
-# data.retrieve_data()
+# Retrieve data from yf API: y-m-d
+data = DatRet("2006-07-01", "2024-12-31", ticker_df)
+# In function below, set log=True to check for data availability
+data.retrieve_data()
 """------------------------------------------------"""
-# # Generate benchmark weights thorugh MPT using Sharpe ratio
-# benchmark = MPT(history_usage, trading_n)
-# # IMPORTANT: In order to see  the effect of the weights, algo exclude last observation from optimization
-# benchmark.frequency_optimizing()
+# Generate benchmark weights thorugh MPT using Sharpe ratio
+benchmark = MPT(history_usage, trading_n)
+# IMPORTANT: In order to see  the effect of the weights, algo exclude last observation from optimization
+benchmark.frequency_optimizing()
 """------------------------------------------------"""
-# objectives = ["Return", "Return"]
-# esg_compliancy = [False, True]
+# Generate production quality (True) portfolio weights
+objectives = ["Return", "Return", 
+              "Sharpe", "Sharpe", 
+              "Sortino", "Sortino", 
+              "Sterling", "Sterling"]
 
+esg_compliancy = [True, False,
+                  True, False,
+                  True, False,
+                  True, False,]
 
-# for i in range(len(objectives)):
-#     reinforcement = RLM(esg_scores, 
-#                         objective=objectives[i],
-#                         history_usage=history_usage_RL,
-#                         rolling_reward_window=rolling_reward_window,
-#                         total_timesteps=150_000,
-#                         esg_compliancy=esg_compliancy[i], 
-#                         gen_validation_weights=True,
-#                         production=True
-#                         )
-#     reinforcement.train_model()
-#     reinforcement.predict()
+for i in range(len(objectives)):
+    reinforcement = RLM(esg_scores, 
+                        objective=objectives[i],
+                        history_usage=history_usage_RL,
+                        rolling_reward_window=rolling_reward_window,
+                        total_timesteps=150_000,
+                        esg_compliancy=esg_compliancy[i], 
+                        gen_validation_weights=True,
+                        production=True
+                        )
+    reinforcement.train_model()
+    reinforcement.predict()
 """------------------------------------------------"""
+# Generate result for individual portfolio and use MOGA
 paths = ["Return_esg_True", "Sharpe_esg_True",
          "Sortino_esg_True","Sterling_esg_True",
          "Return_esg_False", "Sharpe_esg_False",
          "Sortino_esg_False","Sterling_esg_False",]
-# paths = ["Sortino_esg_False","Return_esg_False", "Sharpe_esg_False", "Sterling_esg_False", "Sharpe_esg_True"]
 
 analysis_list = []
 for i in range(len(paths)):
@@ -93,8 +103,10 @@ for i in range(len(paths)):
     att_anal.friple_frequency_analysis()
     analysis_list.append(att_anal)
 """------------------------------------------------"""
-theta = RC(analysis_list, trading_n)
-theta.convey_results()
+# Generalt overview result for comparison
+overview_result = RC(analysis_list, trading_n)
+overview_result.convey_results()
 """------------------------------------------------"""
+# End timer
 elapsed_time = time.time() - start_time
 print(f"Elapsed time: {elapsed_time:.4f} seconds")

@@ -30,6 +30,8 @@ class MencheroOGA():
             allocation and selection effects for each time step.
     """
 
+
+
     def __init__(self, experimental, n_sectors, n_stocks_per_sector):
         """
         Initializes the MencheroOGA class with portfolio returns, benchmark weights, and experimental weights.
@@ -39,6 +41,7 @@ class MencheroOGA():
             benchmark_w (list): A nested list of benchmark weights corresponding to stocks over multiple time periods.
             experimental_w (list): A nested list of experimental/portfolio weights corresponding to stocks over multiple time periods.
         """
+        
         self.bench_w =  pd.read_csv("Data/MPT_weights.csv")         # Correct data (from MPT.py)
         self.exper_w = experimental                                 # Correct data (from IPR.py)
         self.returns = pd.read_csv("Data/StockReturns.csv")
@@ -51,6 +54,7 @@ class MencheroOGA():
 
         self.allocation_effects: list = None
         self.selection_effects: list = None
+
 
 
     def analyzer_at_time_t(self, ret:list,  we:list, wb:list):
@@ -67,6 +71,7 @@ class MencheroOGA():
                   - sel_opt (numpy.ndarray): Optimized selection effects for all sectors at time t.
                   - all_opt (numpy.ndarray): Optimized allocation effects for all sectors at time t.
         """
+        
         # Returns and weights on sector level for  benchmark
         w_b = np.array([sum(wb[int(i*self.n_stocks):int((i+1)*self.n_stocks)]) for i in range(self.n_sectors)])+1e-9
         r_b = np.array([wb[int(i*self.n_stocks):int((i+1)*self.n_stocks)] @ ret[int(i*self.n_stocks):int((i+1)*self.n_stocks)] for i in range(self.n_sectors)])/w_b

@@ -8,6 +8,21 @@ from scipy.stats import pearsonr
 
 
 class ResultConveyor():
+    """
+    A class for performing performance attribution analysis on experimental 
+    portfolio weights compared to benchmark weights. This includes evaluating 
+    returns, ESG characteristics, and generating visualization plots for 
+    allocation and selection effects.
+    
+    Parameters
+    ----------
+    analysis_list : list
+        List of analysis objects containing experimental and benchmark results.
+    n_optimizations : int
+        Number of optimization steps / trading periods.
+    """
+
+
 
     def __init__(self, analysis_list, n_optimizations):
         self.analysis_list = analysis_list
@@ -17,6 +32,11 @@ class ResultConveyor():
 
 
     def overview_plot(self):
+        """
+        Generate a scatter plot comparing selection and allocation effects 
+        of various portfolios. Points are colored by ESG use and sized by active return.
+        """
+
         sel_port = []
         all_port = []
         act_port = []
@@ -58,6 +78,10 @@ class ResultConveyor():
 
 
     def financial_table(self):
+        """
+        Generate a CSV table with financial metrics: P/L, Sharpe, Sortino, and Sterling ratios.
+        """
+
         returns = [self.analysis_list[i].exper_analysis["return"] for i in range(8)]
         txt = ["Ret_ESG","Sha_ESG","Sor_ESG", "Ste_ESG", "Ret", "Sha", "Sor", "Ste"]
         financial_df = pd.DataFrame()
@@ -132,7 +156,13 @@ class ResultConveyor():
         financial_df.to_csv("Results/financial_table.csv", index=False)
 
 
+
     def actvie_return_table(self):
+        """
+        Generate a CSV table with active return and statistical summaries 
+        of allocation and selection effects.
+        """
+
         txt = ["Ret_ESG","Sha_ESG","Sor_ESG", "Ste_ESG", "Ret", "Sha", "Sor", "Ste"]
         active_df = pd.DataFrame()
         active_df["Measurment"] = ["Active return", "mu(all)", "sig(all)", "mu(sel)", "sig(sel)"]
@@ -152,6 +182,11 @@ class ResultConveyor():
 
 
     def esg_table(self):
+        """
+        Generate a CSV table with ESG metrics: average ESG score and 
+        correlation with returns.
+        """
+
         txt = ["Ret_ESG","Sha_ESG","Sor_ESG", "Ste_ESG", "Ret", "Sha", "Sor", "Ste"]
         esg_df = pd.DataFrame()
         esg_df["Measurment"] = ["Avg ESG", "Pearsons R", "p value"]
@@ -169,6 +204,10 @@ class ResultConveyor():
 
 
     def convey_results(self):
+        """
+        Run all result export and visualization methods.
+        """
+                
         self.overview_plot()
         self.financial_table()
         self.actvie_return_table()

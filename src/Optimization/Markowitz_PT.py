@@ -27,6 +27,7 @@ class MarkowitzPT():
         generate_new_positions()
             Generates new stock positions for each time interval using MPT and stores them in `frequency_weights`.
     """
+
     def __init__(self,  history_usage=None, n_optimizations=None):
         self.data = pd.read_csv("Data/StockReturns.csv")
         self.history_usage: int = history_usage
@@ -57,10 +58,8 @@ class MarkowitzPT():
 
         # Generate a list of means
         mean_list = new_data.mean()
-
         # Create a default covariance matrix   
         cov_matrix = new_data.cov()
-
 
         c1 = Bounds(0,1)
         c2 = LinearConstraint(np.ones((self.num_stocks,), dtype=int),1,1)
@@ -72,7 +71,6 @@ class MarkowitzPT():
         w = res.x
         ret = sum(w*mean_list)
         risk = (w@cov_matrix@w.T)**.5
-
         opt_results = [w, ret, risk]
 
         return opt_results
@@ -105,6 +103,7 @@ class MarkowitzPT():
                 # ind_weights = (ind_weights**0.25) /  np.sum(ind_weights**0.25)
                 # ind_weights = np.clip(ind_weights, 0.5/18, 3.5/18) / np.sum(np.clip(ind_weights, 0.5/18, 3.5/18))
                 
+                # Equal weight portfolio
                 ind_weights = np.ones(18)/18
             else: 
                 ind_weights = frequency_weights_list[-1] * (1+self.data.iloc[-(self.history_usage+self.n_optimizations)+y]) 

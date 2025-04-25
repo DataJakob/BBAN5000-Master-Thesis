@@ -26,12 +26,28 @@ from torch import nn
 
 
 
-
-
 class RL_Model():
     """
-    doc string 
+    Reinforcement Learning-based portfolio optimization model.
+
+    This class uses ESG data and stock return information to train and evaluate 
+    an RL agent for dynamic portfolio allocation. It supports ESG-compliant 
+    objectives, historical input usage, rolling reward windows, and transfer learning.
+
+    Attributes:
+        esg_data (np.array): ESG scores for each asset.
+        objective (np.array): Objective-specific reward calculation parameters.
+        history_usage (int): Number of previous time steps used in environment state.
+        rolling_reward_window (int): Rolling window used for computing rewards.
+        total_timesteps (int): Total training timesteps for the RL model.
+        esg_compliancy (bool): Whether to include ESG penalty in optimization.
+        gen_validation_weights (bool): Whether to save model predictions for validation.
+        production (bool): Whether to train on full data without validation.
+        seed (int): Random seed for reproducibility.
     """
+
+
+
     def __init__(self, 
                  esg_data: np.array, 
                  objective: np.array, 
@@ -43,8 +59,20 @@ class RL_Model():
                  production:bool,
                  seed: int =42):
         """
-        doc string
+        Initialize the RL model instance.
+
+        Args:
+            esg_data (np.array): ESG score array.
+            objective (np.array): Objective-specific coefficients.
+            history_usage (int): Number of timesteps to include in state.
+            rolling_reward_window (int): Size of reward calculation window.
+            total_timesteps (int): Training duration.
+            esg_compliancy (bool): Use ESG penalty in reward.
+            gen_validation_weights (bool): Save predictions for validation.
+            production (bool): Enable production training mode.
+            seed (int): Seed for reproducibility.
         """
+
         self.stock_info = pd.read_csv("Data/Input.csv")
         self.esg_data = esg_data
 
@@ -69,8 +97,12 @@ class RL_Model():
     
     def set_seeds(self, seed):
         """
-        doc string
+        Set seeds for reproducibility in NumPy and PyTorch.
+
+        Args:
+            seed (int): Seed value.
         """
+
         np.random.seed(seed)
         torch.manual_seed(seed)
         torch.backends.cudnn.deterministic = True
@@ -79,7 +111,17 @@ class RL_Model():
 
 
     def create_envs(self, data, eval=False):
-        """Create vectorized environments"""
+        """
+        Create and wrap environments using PortfolioEnvironment.
+
+        Args:
+            data (pd.DataFrame): Stock returns to use in the environment.
+            eval (bool): If True, wrap with Monitor for evaluation.
+
+        Returns:
+            VecNormalize: Vectorized and normalized environment.
+        """
+
         def make_env():
             env = PorEnv(
                 history_usage=self.history_usage,
@@ -101,6 +143,13 @@ class RL_Model():
 
 
     def train_model(self):
+        """
+        Train the reinforcement learning model on historical return data.
+
+        Splits the input dataset into training, validation, and test sets.
+        Trains the model on the selected environment based on production flag.
+        """
+
         # Data splitting
         self.train_data = self.stock_info.iloc[:int(0.8*len(self.stock_info))]
         self.valid_data = self.stock_info.iloc[int(0.8*len(self.stock_info)) : int(0.9*len(self.stock_info))].reset_index(drop=True)
@@ -129,7 +178,13 @@ class RL_Model():
 
     def initialize_model(self, env):
         """
-        Initialize the SAC model with given environment
+        Initialize the SAC model with custom architecture and training params.
+
+        Args:
+            env: Vectorized training environment.
+
+        Returns:
+            SAC: Initialized SAC model.
         """
         
         def linear_schedule(initial_value: float):
@@ -163,7 +218,13 @@ class RL_Model():
 
 
     def predict(self):
-        """Perform prediction with transfer learning-based fine-tuning"""
+        """
+        Perform inference and dynamically generate portfolio weights.
+
+        Uses transfer learning with online environment steps. Optionally 
+        saves training and validation predictions to CSV files.
+        """   
+     
         if self.model is None:
             raise ValueError("Model has not been trained. Call train_model() first.")
         self.model.policy.eval()
@@ -178,17 +239,9 @@ class RL_Model():
         obs = test_env.reset()
         
         weights_history_test = []
-        # total_test_steps = len(self.test_data) #- self.history_usage
-        # print(f"Total test steps: {total_test_steps}")
-
-        # Transfer learning setup
-        # original_lr = self.model.learning_rate
-        # self.retrain_count = 0
-
         done = False
         
         while done == False:
-        # for step in range(total_test_steps):
             # Predict weights for current step
             action, _ = self.model.predict(obs, deterministic=True)
             weights = action / np.sum(action + 1e-8)
@@ -212,10 +265,14 @@ class RL_Model():
 
 
     def _generate_weights(self, env, prediction_type):
-        """Helper method to generate weights for train/validation sets"""
+        """
+        Generate and export model predictions (weights) to CSV.
+
+        Args:
+            env: Environment to use for prediction.
+            prediction_type (str): Label to distinguish train/validation.
+        """
         obs = env.reset()
-        # if prediction_type == "ValidPredictions":
-        #     env.current_step = 80  # As in your original code
         
         weights_history = []
         done = False
@@ -238,7 +295,6 @@ class RL_Model():
             else:
                 pass
 
-        
         weights_array = np.array(weights_history).mean(axis=1)
         pd.DataFrame(weights_array).to_csv(
             f"Data/{prediction_type}/RL_weights_{self.objective}_esg_{self.esg_compliancy}.csv",

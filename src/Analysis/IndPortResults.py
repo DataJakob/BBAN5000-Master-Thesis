@@ -7,8 +7,44 @@ from src.Analysis.Menchero_OGA import MencheroOGA as MOGA
 
 
 class GenerateResult():
+    """
+    A class to analyze and visualize the performance of a portfolio optimization algorithm 
+    compared to a benchmark. It evaluates returns, attribution effects, and ESG scores, and 
+    generates visualizations of performance over time.
 
-    def __init__(self, path, n_sectors, n_stock_per_sector, n_optimizations, esg_data, sector_names):    
+    Attributes:
+        returns (DataFrame): DataFrame containing stock return data.
+        bench_w (DataFrame): Benchmark portfolio weights.
+        path (str): Identifier used for locating experiment result files.
+        exper_w (DataFrame): Experimental portfolio weights.
+        esg_data (array): ESG scores corresponding to each stock.
+        n_sectors (int): Number of sectors in the portfolio.
+        n_stock (int): Number of stocks per sector.
+        n_optimizations (int): Number of trading/optimization periods.
+        sector_names (list): List of sector names.
+        exper_analysis (dict): Dictionary to store analysis results.
+    """
+
+
+
+    def __init__(self,
+                path, 
+                n_sectors, 
+                n_stock_per_sector, 
+                n_optimizations, 
+                esg_data, 
+                sector_names):    
+        """
+        Initialize the GenerateResult class.
+
+        Args:
+            path (str): Identifier for experiment files.
+            n_sectors (int): Number of sectors.
+            n_stock_per_sector (int): Number of stocks per sector.
+            n_optimizations (int): Number of optimization steps.
+            esg_data (array-like): Array of ESG scores for each stock.
+            sector_names (list): Names of sectors.
+        """
         self.returns = pd.read_csv("Data/StockReturns.csv")
         self.bench_w = pd.read_csv("Data/MPT_weights.csv")
         self.path = path
@@ -22,11 +58,24 @@ class GenerateResult():
         self.n_optimizations = n_optimizations 
         self.sector_names = sector_names
         
-
         self.exper_analysis: dict = None
+
 
     
     def store_values(self,i,pa,ps,ar,er,br,esg):
+        """
+        Store calculated portfolio performance and attribution values.
+
+        Args:
+            i: Placeholder (not used).
+            pa (array-like): Allocation effects per sector.
+            ps (array-like): Selection effects per sector.
+            ar (array-like): Active return over time.
+            er (array-like): Experimental portfolio return.
+            br (array-like): Benchmark portfolio return.
+            esg (array-like): Average ESG scores over time.
+        """
+
         mydict = {"sector_allocation":pa,
                 "sector_selection":ps,
                 "active_return": ar,
@@ -37,7 +86,20 @@ class GenerateResult():
         self.exper_analysis = mydict
 
 
+
     def plot_values(self,algo_name, pa, ps, ar, er,br,esg):
+        """
+        Generate and save plots that summarize portfolio performance.
+
+        Args:
+            algo_name (str): Name of the algorithm used (used for plot title and filename).
+            pa (array-like): Allocation effects per sector.
+            ps (array-like): Selection effects per sector.
+            ar (array-like): Active return over time.
+            er (array-like): Experimental portfolio return.
+            br (array-like): Benchmark portfolio return.
+            esg (array-like): Average ESG scores over time.
+        """
 
         bigfig, ax = plt.subplots(3,2,figsize=(10,10))
         ax[0,0].plot(br, color="grey", label="Benchmark")
@@ -90,8 +152,17 @@ class GenerateResult():
 
 
 
-
     def friple_frequency_analysis(self):
+        """
+        Conduct full performance analysis:
+        - Uses Menchero OGA to compute attribution effects.
+        - Calculates cumulative returns and active return.
+        - Computes ESG-weighted scores.
+        - Stores results and generates visual plots.
+
+        The method also prints a success message after analysis and visualization.
+        """
+        
         # objective_df = self.exper_w
         # objective_storage = self.path
         # bench_w = [self.bench_w.iloc[-self.n_optimizations+time] for time in range(self.n_optimizations)]

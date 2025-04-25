@@ -16,17 +16,38 @@ from src.Optimization.RewardFunctions import (
 
 class PortfolioEnvironment(gym.Env):
     """
-    doc string
+    A custom Gym environment for portfolio optimization using reinforcement learning.
+
+    This environment models a stock portfolio with the goal of maximizing an objective
+    such as Sharpe ratio, Sortino ratio, Sterling ratio, or return. It optionally penalizes
+    portfolios with high ESG scores if ESG compliance is enabled.
+
+    Parameters
+    ----------
+    history_usage : int
+        Number of past timesteps to include in each observation.
+    rolling_reward_window : int
+        Number of past returns to use when calculating the rolling reward.
+    return_data : pd.DataFrame
+        DataFrame containing historical returns for each stock.
+    esg_data : np.ndarray
+        ESG score for each stock.
+    objective : str
+        Reward function to optimize: one of {"Return", "Sharpe", "Sortino", "Sterling"}.
+    esg_compliancy : bool
+        Whether to penalize portfolios with high ESG scores.
     """
+
+
+
     def __init__(self,
                  history_usage, rolling_reward_window,
                  return_data, esg_data,
                  objective, esg_compliancy):
         super().__init__()
         """
-        doc  string,
-
-        Good, initialize all variables with values 
+        Initializes the PortfolioEnvironment with historical return data, ESG scores,
+        and reward objective.
         """
         self.return_data = return_data.iloc[:,:18].values
         self.esg_data: np.array = esg_data
@@ -54,10 +75,21 @@ class PortfolioEnvironment(gym.Env):
 
     def reset(self, seed=42):
         """
-        doc string
+        Resets the environment to its initial state.
 
-        Good, changing all non-fixed variables inside the environment
+        Parameters
+        ----------
+        seed : int, optional
+            Random seed for reproducibility, by default 42.
+
+        Returns
+        -------
+        observation : np.ndarray
+            The initial observation for the agent.
+        info : dict
+            Additional information including timestep and cumulative geometric return.
         """
+
         super().reset(seed=seed)
 
         self.current_step = 0 
@@ -76,16 +108,18 @@ class PortfolioEnvironment(gym.Env):
 
     def get_observation(self):
         """
-        doc string
+        Generates the current observation window for the agent.
+
+        Returns
+        -------
+        observation : np.ndarray
+            A matrix of shape (n_stocks, history_usage) representing the past
+            stock returns leading up to the current timestep.
         """
-        # Get one step ahead in observations
-        # start_idx = max(0, self.current_step - self.history_usage)
-        # end_idx = self.current_step
+
         maxlen = len(self.return_data)
 
         actual_data = pd.DataFrame(self.return_data)
-        # actual_data = actual_data.iloc[start_idx:end_idx].values.flatten()
-
 
         actual_data = actual_data.iloc[:self.current_step, : ]
 
@@ -106,12 +140,28 @@ class PortfolioEnvironment(gym.Env):
 
     def step(self, action):
         """
-        doc string
+        Executes one time step within the environment based on the agent's action.
+
+        Parameters
+        ----------
+        action : np.ndarray
+            The portfolio weights proposed by the agent, unnormalized.
+
+        Returns
+        -------
+        observation : np.ndarray
+            The updated observation after applying the action.
+        reward : float
+            The reward based on the selected objective and ESG penalty (if enabled).
+        terminated : bool
+            Whether the episode has reached the end of the data.
+        truncated : bool
+            Always False. This flag is reserved for time-limit or other custom stops.
+        info : dict
+            Additional debug info (currently empty).
         """
-        # Generate weights based on actions
 
         current_weights = action / np.sum(action+1e-8)
-        # current_weights = action / np.sum(np.abs(action))
         self.weights_list.append(current_weights)
         
         if self.current_step >= int(self.return_data.shape[0]-1):  # >= instead of == for safety
@@ -158,18 +208,21 @@ class PortfolioEnvironment(gym.Env):
         self.current_step += 1
             
         # Returns the next observation space for the algo to use
-        observation = self.get_observation()
-
-        # if self.current_step %1200 == 0:
-        #     print(new_reward)            
+        observation = self.get_observation()         
 
         return observation, new_reward, terminated, truncated, {}
         
-
+        
 
     def render(self, mode="human"):
-        """ 
-        doc string
         """
+        Renders the environment state to the console.
+
+        Parameters
+        ----------
+        mode : str, optional
+            The mode in which to render. Only "human" is supported.
+        """
+
         print(f"Current step: {self.current_step}, and geometric return: {np.cumprod(self.returns_list)}")
         pass

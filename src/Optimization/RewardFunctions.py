@@ -1,14 +1,25 @@
 import numpy as np
 import pandas
 
-
+# Upper and lower bounds reward function in clipping mechanisms
 lower = -10
 upper = 10
 
 
+
 def sharpe_ratio(return_window: np.array):
     """
-    doc string
+    Calculates a modified Sharpe ratio from a given window of portfolio returns.
+
+    The Sharpe ratio is the average return divided by the standard deviation of returns.
+    This implementation adds a scaling factor, clips the output between a specified range,
+    and incorporates the most recent daily return change into the final score.
+
+    Args:
+        return_window (np.array): A 1D array of past portfolio returns.
+
+    Returns:
+        float: A scaled, clipped, and adjusted Sharpe ratio, averaged with the most recent daily return change.
     """
     if len(return_window) <= 2:
         return 0
@@ -30,8 +41,18 @@ def sharpe_ratio(return_window: np.array):
 
 def return_ratio(return_window: np.array):
     """
-    doc string
+    Computes a custom return-based reward using average and recent return change.
+
+    This metric favors higher average returns and combines it with the most recent return jump.
+    The final score is clipped and scaled to improve learning stability.
+
+    Args:
+        return_window (np.array): A 1D array of past portfolio returns.
+
+    Returns:
+        float: A scaled and averaged score based on mean return and daily return change.
     """
+
     if len(return_window) < 2:
         return 0
     mean = np.mean(return_window)
@@ -49,8 +70,19 @@ def return_ratio(return_window: np.array):
 
 def sortino_ratio(return_window: np.array):
     """
-    doc string
+    Calculates a modified Sortino ratio from a given return window.
+
+    The Sortino ratio is a variation of the Sharpe ratio using downside deviation.
+    This version includes a daily return change to increase responsiveness and prevent
+    reward flattening in periods of low volatility.
+
+    Args:
+        return_window (np.array): A 1D array of past portfolio returns.
+
+    Returns:
+        float: A scaled and averaged Sortino ratio, adjusted with recent daily change.
     """
+
     if len(return_window) < 2:
         return 0  
     mean = np.mean(return_window)
@@ -65,10 +97,22 @@ def sortino_ratio(return_window: np.array):
     return (sortino + daily_change) / 2
 
 
+
 def sterling_ratio(return_window: np.array):
     """ 
-    doc string 
+    Computes a modified Sterling ratio using drawdowns and average returns.
+
+    The Sterling ratio considers drawdowns from peak cumulative returns to
+    assess downside risk. This implementation includes average drawdown and
+    appends a daily change for added variability in reward signals.
+
+    Args:
+        return_window (np.array): A 1D array of past portfolio returns.
+
+    Returns:
+        float: A clipped and averaged Sterling ratio value adjusted with recent daily return change.
     """
+
     if len(return_window) < 2:
         return 0
     mean = np.mean(return_window)
@@ -93,10 +137,23 @@ def sterling_ratio(return_window: np.array):
     return (sterling + daily_change) / 2
 
 
+
 def penalise_reward(reward, esg_score):
     """
-    doc string
+    Penalizes the reward score based on ESG compliance.
+
+    This function deducts a penalty from the original reward score
+    proportionally to the ESG score. A higher ESG score implies greater penalty,
+    making the agent favor lower ESG scores when this is activated.
+
+    Args:
+        reward (float): The reward score to be penalized.
+        esg_score (float): The ESG score of the portfolio at current step.
+
+    Returns:
+        float: The penalized reward.
     """
+
     penalty = 0.3 * (esg_score / 40) 
    
     penalised_reward = reward - penalty     
