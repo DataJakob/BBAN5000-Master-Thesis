@@ -26,7 +26,10 @@ class DataRetriever:
     
 
 
-    def __init__(self, start_date, end_date, ticker_df):
+    def __init__(self, 
+                 start_date: str, 
+                 end_date: str, 
+                 ticker_df: pd.DataFrame):
         """
         Initialize the DataRetriever with start/end dates and a DataFrame of tickers.
 
@@ -48,7 +51,8 @@ class DataRetriever:
 
 
 
-    def z_score(self, arr: np.array):
+    def z_score(self, 
+                arr: np.array):
         """
         Compute the z-score of a numeric array.
 

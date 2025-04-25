@@ -41,14 +41,18 @@ class PortfolioEnvironment(gym.Env):
 
 
     def __init__(self,
-                 history_usage, rolling_reward_window,
-                 return_data, esg_data,
-                 objective, esg_compliancy):
+                 history_usage: int, 
+                 rolling_reward_window: int,
+                 return_data: pd.DataFrame, 
+                 esg_data: np.array,
+                 objective: str,
+                 esg_compliancy: bool):
         super().__init__()
         """
         Initializes the PortfolioEnvironment with historical return data, ESG scores,
         and reward objective.
         """
+
         self.return_data = return_data.iloc[:,:18].values
         self.esg_data: np.array = esg_data
         self.history_usage: int = history_usage
@@ -73,7 +77,8 @@ class PortfolioEnvironment(gym.Env):
 
 
 
-    def reset(self, seed=42):
+    def reset(self, 
+              seed: int=42):
         """
         Resets the environment to its initial state.
 
@@ -138,7 +143,8 @@ class PortfolioEnvironment(gym.Env):
 
 
 
-    def step(self, action):
+    def step(self, 
+             action: np.array):
         """
         Executes one time step within the environment based on the agent's action.
 
@@ -214,7 +220,8 @@ class PortfolioEnvironment(gym.Env):
         
         
 
-    def render(self, mode="human"):
+    def render(self, 
+               mode: int="human"):
         """
         Renders the environment state to the console.
 

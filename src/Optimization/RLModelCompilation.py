@@ -57,7 +57,7 @@ class RL_Model():
                  esg_compliancy: bool,
                  gen_validation_weights: bool,
                  production:bool,
-                 seed: int =42):
+                 seed: int = 42):
         """
         Initialize the RL model instance.
 
@@ -95,7 +95,8 @@ class RL_Model():
 
 
     
-    def set_seeds(self, seed):
+    def set_seeds(self, 
+                  seed: int):
         """
         Set seeds for reproducibility in NumPy and PyTorch.
 
@@ -110,7 +111,9 @@ class RL_Model():
     
 
 
-    def create_envs(self, data, eval=False):
+    def create_envs(self, 
+                    data: pd.DataFrame,
+                    eval: bool=False):
         """
         Create and wrap environments using PortfolioEnvironment.
 
@@ -176,7 +179,8 @@ class RL_Model():
 
 
 
-    def initialize_model(self, env):
+    def initialize_model(self, 
+                         env: PorEnv):
         """
         Initialize the SAC model with custom architecture and training params.
 
@@ -264,7 +268,9 @@ class RL_Model():
 
 
 
-    def _generate_weights(self, env, prediction_type):
+    def _generate_weights(self, 
+                          env: PorEnv, 
+                          prediction_type: str):
         """
         Generate and export model predictions (weights) to CSV.
 

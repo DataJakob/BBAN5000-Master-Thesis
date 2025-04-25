@@ -138,7 +138,8 @@ def sterling_ratio(return_window: np.array):
 
 
 
-def penalise_reward(reward, esg_score):
+def penalise_reward(reward: np.array, 
+                    esg_score: float):
     """
     Penalizes the reward score based on ESG compliance.
 

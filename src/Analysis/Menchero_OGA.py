@@ -32,7 +32,10 @@ class MencheroOGA():
 
 
 
-    def __init__(self, experimental, n_sectors, n_stocks_per_sector):
+    def __init__(self, 
+                 experimental: pd.DataFrame, 
+                 n_sectors: int,
+                 n_stocks_per_sector: int):
         """
         Initializes the MencheroOGA class with portfolio returns, benchmark weights, and experimental weights.
 
@@ -57,7 +60,10 @@ class MencheroOGA():
 
 
 
-    def analyzer_at_time_t(self, ret:list,  we:list, wb:list):
+    def analyzer_at_time_t(self, 
+                           ret:list,
+                           we:list, 
+                           wb:list):
         """
         Performs optimized geometric attribution analysis for a single time period.
 

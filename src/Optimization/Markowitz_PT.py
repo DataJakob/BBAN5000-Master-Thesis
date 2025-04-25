@@ -28,7 +28,9 @@ class MarkowitzPT():
             Generates new stock positions for each time interval using MPT and stores them in `frequency_weights`.
     """
 
-    def __init__(self,  history_usage=None, n_optimizations=None):
+    def __init__(self,  
+                 history_usage: int=None, 
+                 n_optimizations: int=None):
         self.data = pd.read_csv("Data/StockReturns.csv")
         self.history_usage: int = history_usage
         self.n_optimizations: int = n_optimizations
@@ -42,7 +44,8 @@ class MarkowitzPT():
         
         
 
-    def optimize_portfolio(self, new_data):
+    def optimize_portfolio(self, 
+                           new_data: pd.DataFrame):
         """
         Optimize a stock portfolio using Mean-Variance Optimization (MVO) and the Sharpe ratio.
         

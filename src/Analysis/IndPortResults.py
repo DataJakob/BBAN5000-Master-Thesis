@@ -28,12 +28,12 @@ class GenerateResult():
 
 
     def __init__(self,
-                path, 
-                n_sectors, 
-                n_stock_per_sector, 
-                n_optimizations, 
-                esg_data, 
-                sector_names):    
+                path: str, 
+                n_sectors: int, 
+                n_stock_per_sector: int, 
+                n_optimizations: int, 
+                esg_data: np.array, 
+                sector_names: list):    
         """
         Initialize the GenerateResult class.
 
@@ -62,12 +62,17 @@ class GenerateResult():
 
 
     
-    def store_values(self,i,pa,ps,ar,er,br,esg):
+    def store_values(self,
+                     pa: list,
+                     ps: list,
+                     ar: np.array,
+                     er: np.array,
+                     br: np.array,
+                     esg: list):
         """
         Store calculated portfolio performance and attribution values.
 
         Args:
-            i: Placeholder (not used).
             pa (array-like): Allocation effects per sector.
             ps (array-like): Selection effects per sector.
             ar (array-like): Active return over time.
@@ -87,7 +92,14 @@ class GenerateResult():
 
 
 
-    def plot_values(self,algo_name, pa, ps, ar, er,br,esg):
+    def plot_values(self,
+                    algo_name: str, 
+                    pa: list, 
+                    ps: list,
+                    ar: np.array, 
+                    er: np.array,
+                    br: np.array,
+                    esg: list):
         """
         Generate and save plots that summarize portfolio performance.
 
@@ -196,4 +208,3 @@ class GenerateResult():
                             average_esg)
 
         print("----Analysis completed succesfully----")
-

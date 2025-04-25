@@ -24,7 +24,12 @@ class ResultConveyor():
 
 
 
-    def __init__(self, analysis_list, n_optimizations):
+    def __init__(self, 
+                 analysis_list: list, 
+                 n_optimizations: int):
+        """
+        Initialize the ResultConveyor class.
+        """
         self.analysis_list = analysis_list
         # All optimizations weights are to be multiplied with returns for time t+1
         self.n_optimizations = n_optimizations -1
@@ -87,12 +92,17 @@ class ResultConveyor():
         financial_df = pd.DataFrame()
         financial_df["Measurement"] = ["P/L", "Sharpe", "Sortino", "Sterling"]
 
-        def _calculate_PL(returns):
+
+        def _calculate_PL(returns:np.array):
             """Calculate P/L"""
+
             return round((returns[-1] -1)*100,2)
 
-        def _calculate_sharpe(returns, risk_free_rate):
+
+        def _calculate_sharpe(returns:np.array,
+                               risk_free_rate: float):
             """Calculate annualized Sharpe Ratio"""
+
             returns = returns -1
             # print(returns)
             excess_returns = returns - risk_free_rate
@@ -102,7 +112,9 @@ class ResultConveyor():
                 return 0.0
             return round(mean_excess / std_excess,3)
 
-        def _calculate_sortino(returns, risk_free_rate):
+
+        def _calculate_sortino(returns: np.array,
+                               risk_free_rate: float):
             """Calculate annualized Sortino Ratio"""
             returns = returns -1
             excess_returns = returns - risk_free_rate
@@ -112,7 +124,8 @@ class ResultConveyor():
             #     return 0.0
             return round(mean_excess / downside_risk,3)
 
-        def _calculate_sterling(returns: list):
+
+        def _calculate_sterling(returns: np.array):
             """
             Sterling ratio calculator
             """
