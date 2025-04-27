@@ -147,15 +147,32 @@ class GenerateResult():
         ax[1, 1].set_title('ESG Score Development')
         ax[1,1].legend()
 
-        ax[2,0].boxplot(pa)
+        # ax[2,0].boxplot(pa)
+        # ax[2,0].axhline(y=0, color="black")
+        # ax[2,0].set_xticklabels(self.sector_names, rotation=45) 
+        # ax[2,0].set_title('Allocation Variation by Sector')
+
+        # ax[2,1].boxplot(ps)
+        # ax[2,1].axhline(y=0, color="black")
+        # ax[2,1].set_xticklabels(self.sector_names, rotation=45) 
+        # ax[2,1].set_title('Selection Variation by Sector')
+        
+        # Allocation Variation by Sector
+        ax[2,0].violinplot(pa, showmeans=True, showmedians=True)
         ax[2,0].axhline(y=0, color="black")
-        ax[2,0].set_xticklabels(self.sector_names, rotation=45) 
+        ax[2,0].set_xticks(range(1, len(self.sector_names)+1))
+        ax[2,0].set_xticklabels(self.sector_names, rotation=45)
+        ax[2,0].set_ylim(-0.015, 0.02)
         ax[2,0].set_title('Allocation Variation by Sector')
 
-        ax[2,1].boxplot(ps)
+        # Selection Variation by Sector
+        ax[2,1].violinplot(ps, showmeans=True, showmedians=True)
         ax[2,1].axhline(y=0, color="black")
-        ax[2,1].set_xticklabels(self.sector_names, rotation=45) 
+        ax[2,1].set_xticks(range(1, len(self.sector_names)+1))
+        ax[2,1].set_xticklabels(self.sector_names, rotation=45)
+        ax[2,1].set_ylim(-0.015, 0.02)
         ax[2,1].set_title('Selection Variation by Sector')
+
 
         plt.suptitle("Complete Proto Plot for "+algo_name+" Algo", fontsize=12)
         bigfig.tight_layout(pad=2.0)
@@ -195,8 +212,7 @@ class GenerateResult():
         active_return = np.cumprod([port_sel_prod[i]*port_all_prod[i] for i in range(self.n_optimizations)])
         average_esg = [np.abs(exper_w.iloc[i])@self.esg_data for i in range(self.n_optimizations)]
 
-        self.store_values(self.exper_w, 
-                            port_all, port_sel, 
+        self.store_values( port_all, port_sel, 
                             active_return, 
                             exper_returns, bench_returns, 
                             average_esg)
