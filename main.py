@@ -2,16 +2,16 @@
 import numpy as np
 import pandas as pd
 
-# from src.Data_Retriever import DataRetriever as DatRet
+from src.Data_Retriever import DataRetriever as DatRet
 
-# from src.Optimization.Markowitz_PT import MarkowitzPT as MPT
+from src.Optimization.Markowitz_PT import MarkowitzPT as MPT
 
-# from src.Optimization.Environment import PortfolioEnvironment as PorEnv
-# from src.Optimization.RLModelCompilation import RL_Model as RLM
+from src.Optimization.Environment import PortfolioEnvironment as PorEnv
+from src.Optimization.RLModelCompilation import RL_Model as RLM
 
 from src.Analysis.Menchero_OGA import MencheroOGA as MOGA
 from src.Analysis.IndPortResults import GenerateResult as GR
-# from src.Analysis.OverviewResults import ResultConveyor as RC
+from src.Analysis.OverviewResults import ResultConveyor as RC
 
 import time
 """------------------------------------------------"""
@@ -24,11 +24,11 @@ n_stocks_per_sector = 3
 
 # Define variables for benchmark
 trading_n = 800
-history_usage = int(521*4)
+history_usage = int(100)
 
 # For RL algorithm
-history_usage_RL = 80
-rolling_reward_window = 40
+history_usage_RL = 50
+rolling_reward_window = 50
 """------------------------------------------------"""
 # Defining security pool
 ticker_df =  pd.DataFrame({
@@ -60,7 +60,7 @@ esg_scores = np.array([
 # # IMPORTANT: In order to see  the effect of the weights, algo exclude last observation from optimization
 # benchmark.frequency_optimizing()
 """------------------------------------------------"""
-# # Generate production quality (True) portfolio weights
+# Generate production quality (True) portfolio weights
 # objectives = ["Return", "Return", 
 #               "Sharpe", "Sharpe", 
 #               "Sortino", "Sortino", 
@@ -71,24 +71,33 @@ esg_scores = np.array([
 #                   True, False,
 #                   True, False,]
 
+
+# esg_compliancy = [False,False,False,False,False]
+# objectives = ["Return", "Sharpe", "Sortino", "Sterling", "Calmar"]
+
+
 # for i in range(len(objectives)):
 #     reinforcement = RLM(esg_scores, 
 #                         objective=objectives[i],
 #                         history_usage=history_usage_RL,
 #                         rolling_reward_window=rolling_reward_window,
-#                         total_timesteps=150_000,
+#                         total_timesteps=200_000,
 #                         esg_compliancy=esg_compliancy[i], 
-#                         gen_validation_weights=True,
+#                         gen_validation_weights=False,
 #                         production=True
 #                         )
 #     reinforcement.train_model()
 #     reinforcement.predict()
-"""------------------------------------------------"""
+# """------------------------------------------------"""
 # Generate result for individual portfolio and use MOGA
-paths = ["Return_esg_True", "Sharpe_esg_True",
-         "Sortino_esg_True","Sterling_esg_True",
-         "Return_esg_False", "Sharpe_esg_False",
-         "Sortino_esg_False","Sterling_esg_False",]
+# paths = ["Return_esg_True", "Sharpe_esg_True",
+#          "Sortino_esg_True","Sterling_esg_True",
+#          "Return_esg_False", "Sharpe_esg_False",
+#          "Sortino_esg_False","Sterling_esg_False",
+#          "Calmar_esg_False"]
+paths = ["Return_esg_False", "Sharpe_esg_False",
+         "Sortino_esg_False","Sterling_esg_False",
+         "Calmar_esg_False"]
 
 analysis_list = []
 for i in range(len(paths)):
@@ -104,8 +113,8 @@ for i in range(len(paths)):
     analysis_list.append(att_anal)
 """------------------------------------------------"""
 # Generalt overview result for comparison
-# overview_result = RC(analysis_list, trading_n)
-# overview_result.convey_results()
+overview_result = RC(analysis_list, trading_n)
+overview_result.convey_results()
 """------------------------------------------------"""
 # End timer
 elapsed_time = time.time() - start_time

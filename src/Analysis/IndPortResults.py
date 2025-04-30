@@ -113,7 +113,8 @@ class GenerateResult():
             esg (array-like): Average ESG scores over time.
         """
 
-        bigfig, ax = plt.subplots(3,2,figsize=(10,10))
+        # Graph development for portfolio
+        bigfig, ax = plt.subplots(2,2,figsize=(10,10))
         ax[0,0].plot(br, color="grey", label="Benchmark")
         ax[0,0].plot(er, color="blue", label="Experimental")
         ax[0,0].plot(ar, color="green", label= "Geometric active return")
@@ -125,6 +126,7 @@ class GenerateResult():
         ax[0,0].set_title('General Portfolio Performance')
         ax[0,0].legend()
 
+        # Attribution effects by portfolio
         pap = [np.prod(pa[i]+1) for i in range(len(pa))]
         psp = [np.prod(ps[i]+1) for i in range(len(ps))]
         data_arrays = [np.array(pap)-1, np.array(psp)-1]
@@ -133,50 +135,27 @@ class GenerateResult():
         ax[0,1].axhline(y=0, color="black")
         ax[0,1].set_ylabel("Return")
         ax[0,1].set_title('Attribution Effect Variation')
-
-        ax[1,0].scatter(x=esg, y=pd.Series(ar).pct_change(),
-                        s= 12, alpha=.3,
-                        color="black")
-        ax[1,0].set_xlabel("Average ESG score")
-        ax[1,0].set_ylabel("Portfolio Return")
-        ax[1,0].set_title("Correlation: ESG x Return")
-
-        ax[1,1].plot(esg, color="blue", label="Mean ESG score")
-        ax[1,1].set_ylabel("ESG score")
-        ax[1,1].set_xlabel("Trading times")
-        ax[1, 1].set_title('ESG Score Development')
-        ax[1,1].legend()
-
-        # ax[2,0].boxplot(pa)
-        # ax[2,0].axhline(y=0, color="black")
-        # ax[2,0].set_xticklabels(self.sector_names, rotation=45) 
-        # ax[2,0].set_title('Allocation Variation by Sector')
-
-        # ax[2,1].boxplot(ps)
-        # ax[2,1].axhline(y=0, color="black")
-        # ax[2,1].set_xticklabels(self.sector_names, rotation=45) 
-        # ax[2,1].set_title('Selection Variation by Sector')
         
         # Allocation Variation by Sector
-        ax[2,0].violinplot(pa, showmeans=True, showmedians=True)
-        ax[2,0].axhline(y=0, color="black")
-        ax[2,0].set_xticks(range(1, len(self.sector_names)+1))
-        ax[2,0].set_xticklabels(self.sector_names, rotation=45)
-        ax[2,0].set_ylim(-0.015, 0.02)
-        ax[2,0].set_title('Allocation Variation by Sector')
+        ax[1,0].violinplot(pa, showmeans=True, showmedians=True)
+        ax[1,0].axhline(y=0, color="black")
+        ax[1,0].set_xticks(range(1, len(self.sector_names)+1))
+        ax[1,0].set_xticklabels(self.sector_names, rotation=45)
+        ax[1,0].set_ylim(-0.015, 0.02)
+        ax[1,0].set_title('Allocation Variation by Sector')
 
         # Selection Variation by Sector
-        ax[2,1].violinplot(ps, showmeans=True, showmedians=True)
-        ax[2,1].axhline(y=0, color="black")
-        ax[2,1].set_xticks(range(1, len(self.sector_names)+1))
-        ax[2,1].set_xticklabels(self.sector_names, rotation=45)
-        ax[2,1].set_ylim(-0.015, 0.02)
-        ax[2,1].set_title('Selection Variation by Sector')
+        ax[1,1].violinplot(ps, showmeans=True, showmedians=True)
+        ax[1,1].axhline(y=0, color="black")
+        ax[1,1].set_xticks(range(1, len(self.sector_names)+1))
+        ax[1,1].set_xticklabels(self.sector_names, rotation=45)
+        ax[1,1].set_ylim(-0.015, 0.02)
+        ax[1,1].set_title('Selection Variation by Sector')
 
 
         plt.suptitle("Complete Proto Plot for "+algo_name+" Algo", fontsize=12)
         bigfig.tight_layout(pad=2.0)
-        bigfig.savefig("Results/"+algo_name+".PNG", dpi=300, bbox_inches="tight")
+        bigfig.savefig("Results/Images/"+algo_name+".PNG", dpi=300, bbox_inches="tight")
         plt.close()
 
 
@@ -210,7 +189,8 @@ class GenerateResult():
         port_sel_prod = [np.prod(port_sel[i]+1) for i in range(len(port_sel))]
 
         active_return = np.cumprod([port_sel_prod[i]*port_all_prod[i] for i in range(self.n_optimizations)])
-        average_esg = [np.abs(exper_w.iloc[i])@self.esg_data for i in range(self.n_optimizations)]
+        average_esg = [np.dot(exper_w.iloc[i], returns.iloc[i])+1 for i in range(self.n_optimizations)]
+        # [np.abs(exper_w.iloc[i])@self.esg_data for i in range(self.n_optimizations)]
 
         self.store_values( port_all, port_sel, 
                             active_return, 

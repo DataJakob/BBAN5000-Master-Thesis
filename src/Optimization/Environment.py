@@ -9,6 +9,7 @@ from src.Optimization.RewardFunctions import (
     sortino_ratio,
     sterling_ratio,
     return_ratio,
+    calmar_ratio,
     penalise_reward
 )
 
@@ -46,7 +47,8 @@ class PortfolioEnvironment(gym.Env):
                  return_data: pd.DataFrame, 
                  esg_data: np.array,
                  objective: str,
-                 esg_compliancy: bool):
+                 esg_compliancy: bool
+                 ):
         super().__init__()
         """
         Initializes the PortfolioEnvironment with historical return data, ESG scores,
@@ -70,6 +72,8 @@ class PortfolioEnvironment(gym.Env):
                                             high=np.inf, 
                                             shape=(self.n_stocks * 1, 
                                                    self.history_usage),) # * 4
+        
+        # self.seed: int = seed
 
         self.current_step: int = 0
         self.weights_list: list = []
@@ -77,8 +81,8 @@ class PortfolioEnvironment(gym.Env):
 
 
 
-    def reset(self, 
-              seed: int=42):
+    def reset(self,
+              seed: int= 42):
         """
         Resets the environment to its initial state.
 
@@ -203,6 +207,8 @@ class PortfolioEnvironment(gym.Env):
             new_reward = sharpe_ratio(current_reward)
         elif self.objective == "Sortino":
             new_reward = sortino_ratio(current_reward)
+        elif self.objective == "Calmar":
+            new_reward = calmar_ratio(current_reward)
         else:
             new_reward = sterling_ratio(current_reward)
         

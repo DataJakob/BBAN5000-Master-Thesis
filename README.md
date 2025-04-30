@@ -3,8 +3,8 @@
 <b>Contributors:</b>
 <p> Jakob Lindstrøm & Marcus Hjertaas </p>
 <b>Course: </b><p>BBAN5000 - Master's thesis in Business Analytics</p>
-<b> Keywords: </b2>
-<p> Reinforcement Learning, Portfolio Optimization, Portfolio Performance, Attribution Analysis, Markowitz Portfolio Theory </p>
+<b> Keywords: </b>
+<p> Reinforcement Learning, Portfolio Optimization, Portfolio Performance, Attribution Analysis, Markowitz Portfolio Theory, Investment Strategies, Reward Functions </p>
 
 <h2> Table of Content</h2>
 <ul>

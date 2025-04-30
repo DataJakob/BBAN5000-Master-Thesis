@@ -2,8 +2,8 @@ import numpy as np
 import pandas
 
 # Upper and lower bounds reward function in clipping mechanisms
-lower = -10
-upper = 10
+lower = -100
+upper = 100
 
 
 
@@ -31,11 +31,11 @@ def sharpe_ratio(return_window: np.array):
     sharpe = np.clip(sharpe, lower, upper) 
     if np.isnan(sharpe):
         return 0.0 
-    sharpe *= 5
+    # sharpe *= 5
 
-    daily_change =  (return_window[-1] / return_window[-2]) * 100
-    return (sharpe + daily_change) / 2
-    # return sharpe
+    # daily_change =  (return_window[-1] / return_window[-2]) * 100
+    # return (sharpe + daily_change) / 2
+    return sharpe
 
 
 
@@ -60,11 +60,11 @@ def return_ratio(return_window: np.array):
 
     if np.isnan(mean):
         return 0.0 
-    mean *= 1000
+    # mean *= 1000
 
-    daily_change =  (return_window[-1] / return_window[-2]) *100
-    return (mean + daily_change) / 2
-    # return mean
+    # daily_change =  (return_window[-1] / return_window[-2]) *100
+    # return (mean + daily_change) / 2
+    return mean
 
 
 
@@ -92,9 +92,10 @@ def sortino_ratio(return_window: np.array):
     sortino = np.clip(sortino, lower, upper) # Currently arbitrary
     if np.isnan(sortino):
         return 0.0 
-    daily_change =  (return_window[-1] / return_window[-2]) *100
-
-    return (sortino + daily_change) / 2
+    
+    # daily_change =  (return_window[-1] / return_window[-2]) *100
+    # return (sortino + daily_change) / 2
+    return sortino
 
 
 
@@ -132,11 +133,30 @@ def sterling_ratio(return_window: np.array):
 
     if np.isnan(sterling):
         return 0.0 
-    daily_change = (return_window[-1] / return_window[-2]) *100
+    
+    # daily_change = (return_window[-1] / return_window[-2]) *100
+    # return (sterling + daily_change) / 2
+    return sterling
 
-    return (sterling + daily_change) / 2
 
 
+def calmar_ratio(return_window: np.array):
+
+    if len(return_window) < 2:
+        return 0
+
+    cumu = np.cumprod(1 + np.array(return_window))
+
+    peak = np.maximum.accumulate(cumu)
+    drawdown = (cumu - peak) / peak
+    max_drawdown = np.min(drawdown)
+
+    avg_return = np.mean(return_window)
+
+    if max_drawdown == 0:
+        return 10
+    else:
+        return avg_return / abs(max_drawdown)
 
 def penalise_reward(reward: np.array, 
                     esg_score: float):

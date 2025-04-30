@@ -9,8 +9,6 @@ from stable_baselines3 import PPO
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize, VecCheckNan
 
-from sklearn.model_selection import train_test_split
-
 from src.Optimization.Environment import PortfolioEnvironment as PorEnv
 
 import torch
@@ -132,12 +130,13 @@ class RL_Model():
                 return_data=data,
                 esg_data=self.esg_data,
                 objective=self.objective,
-                esg_compliancy=self.esg_compliancy
+                esg_compliancy=self.esg_compliancy,
+                # seed = self.seed
             )
             if eval:
                 env = Monitor(env)
             return env
-        env = make_vec_env(make_env, n_envs=4 if not eval else 1, 
+        env = make_vec_env(make_env, n_envs=3 if not eval else 1, 
                           seed=self.seed, vec_env_cls=DummyVecEnv)
         env = VecCheckNan(env)
         env = VecNormalize(env, norm_obs=True, norm_reward=True)
@@ -162,7 +161,7 @@ class RL_Model():
         self.train_env = self.create_envs(self.train_data, eval=False)
         self.valid_env = self.create_envs(self.valid_data, eval=True)
 
-        self.production_env = self.create_envs(self.stock_info.iloc[:int(0.9*(len(self.stock_info)))])
+        self.production_env = self.create_envs(self.stock_info.iloc[:int(0.9*(len(self.stock_info)))], eval=False)
 
         if self.production == False:
             self.model = self.initialize_model(self.train_env)
@@ -238,7 +237,6 @@ class RL_Model():
             self._generate_weights(self.train_env, "TrainPredictions")
             self._generate_weights(self.valid_env, "ValidPredictions")
         
-        # Dynamic prediction on test set with transfer learning
         test_env = self.create_envs(self.test_data, eval=True)
         obs = test_env.reset()
         
@@ -257,14 +255,14 @@ class RL_Model():
             if done[0]:
                 done = True
                 break
+        
 
-            
         weights_array = np.array(weights_history_test).squeeze()
         pd.DataFrame(weights_array).to_csv(
             f"Data/TestPredictions/RL_weights_{self.objective}_esg_{self.esg_compliancy}.csv",
             index=False)
-        
-        print("Dynamic prediction with transfer learning complete.")
+        # return wack
+
 
 
 
