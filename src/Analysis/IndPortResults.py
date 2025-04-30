@@ -117,8 +117,8 @@ class GenerateResult():
         bigfig, ax = plt.subplots(2,2,figsize=(10,10))
         ax[0,0].plot(br, color="grey", label="Benchmark")
         ax[0,0].plot(er, color="blue", label="Experimental")
-        ax[0,0].plot(ar, color="green", label= "Geometric active return")
-        ax[0,0].scatter(x=np.linspace(0,self.n_optimizations-1, self.n_optimizations), y=(br*ar), 
+        ax[0,0].plot(np.cumprod(ar), color="green", label= "Geometric active return")
+        ax[0,0].scatter(x=np.linspace(0,self.n_optimizations-1, self.n_optimizations), y=(br*np.cumprod(ar)), 
                 s=5, color="black", label="Validity Control")
         ax[0,0].axhline(y=1, color="red")
         ax[0,0].set_ylabel("Return")
@@ -188,7 +188,7 @@ class GenerateResult():
         port_sel = analysis.selection_effects.reshape(-1,self.n_sectors)
         port_sel_prod = [np.prod(port_sel[i]+1) for i in range(len(port_sel))]
 
-        active_return = np.cumprod([port_sel_prod[i]*port_all_prod[i] for i in range(self.n_optimizations)])
+        active_return = [port_sel_prod[i]*port_all_prod[i] for i in range(self.n_optimizations)]
         average_esg = [np.dot(exper_w.iloc[i], returns.iloc[i])+1 for i in range(self.n_optimizations)]
         # [np.abs(exper_w.iloc[i])@self.esg_data for i in range(self.n_optimizations)]
 
