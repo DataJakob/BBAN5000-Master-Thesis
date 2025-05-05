@@ -69,7 +69,7 @@ class MarkowitzPT():
         weights =  np.ones(self.num_stocks)
         decVar = weights / np.sum(weights)
         
-        Z = lambda w: np.sqrt(max(w @ cov_matrix @ w.T, 0))
+        Z = lambda w: np.sqrt(max(w @ cov_matrix @ w.T, 0))/(mean_list@w)
         res = minimize(Z, decVar, method="trust-constr", constraints=c2, bounds=c1)
         w = res.x
         ret = sum(w*mean_list)
