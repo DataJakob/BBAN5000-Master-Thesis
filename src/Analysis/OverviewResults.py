@@ -176,8 +176,6 @@ class ResultConveyor():
             downside_std = np.std(downside_returns) * np.sqrt(521)
             if downside_std == 0:
                 return 0.0
-            print(mean)
-            print(downside_std)
             return np.round(mean / downside_std,3)
 
 

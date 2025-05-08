@@ -50,10 +50,10 @@ esg_scores = np.array([
     21.2, 26.8, 24.9
 ])
 """------------------------------------------------"""
-# # Retrieve data from yf API: y-m-d
-# data = DatRet("2006-07-01", "2024-12-31", ticker_df)
-# # In function below, set log=True to check for data availability
-# data.retrieve_data()
+# Retrieve data from yf API: y-m-d
+data = DatRet("2006-07-01", "2024-12-31", ticker_df)
+# In function below, set log=True to check for data availability
+data.retrieve_data()
 """------------------------------------------------"""
 # Generate benchmark weights through MPT using Sharpe ratio
 benchmark = MPT(history_usage, trading_n)
@@ -61,40 +61,24 @@ benchmark = MPT(history_usage, trading_n)
 benchmark.frequency_optimizing()
 """------------------------------------------------"""
 # Generate production quality (True) portfolio weights
-# objectives = ["Return", "Return", 
-#               "Sharpe", "Sharpe", 
-#               "Sortino", "Sortino", 
-#               "Sterling", "Sterling"]
-
-# esg_compliancy = [True, False,
-#                   True, False,
-#                   True, False,
-#                   True, False,]
+esg_compliancy = [False,False,False,False,False]
+objectives = ["Return", "Sharpe", "Sortino", "Sterling", "Calmar"]
 
 
-# esg_compliancy = [False,False,False,False,False]
-# objectives = ["Return", "Sharpe", "Sortino", "Sterling", "Calmar"]
-
-
-# for i in range(len(objectives)):
-#     reinforcement = RLM(esg_scores, 
-#                         objective=objectives[i],
-#                         history_usage=history_usage_RL,
-#                         rolling_reward_window=rolling_reward_window,
-#                         total_timesteps=200_000,
-#                         esg_compliancy=esg_compliancy[i], 
-#                         gen_validation_weights=False,
-#                         production=True
-#                         )
-#     reinforcement.train_model()
-#     reinforcement.predict()
-# """------------------------------------------------"""
+for i in range(len(objectives)):
+    reinforcement = RLM(esg_scores, 
+                        objective=objectives[i],
+                        history_usage=history_usage_RL,
+                        rolling_reward_window=rolling_reward_window,
+                        total_timesteps=200_000,
+                        esg_compliancy=esg_compliancy[i], 
+                        gen_validation_weights=False,
+                        production=True
+                        )
+    reinforcement.train_model()
+    reinforcement.predict()
+"""------------------------------------------------"""
 # Generate result for individual portfolio and use MOGA
-# paths = ["Return_esg_True", "Sharpe_esg_True",
-#          "Sortino_esg_True","Sterling_esg_True",
-#          "Return_esg_False", "Sharpe_esg_False",
-#          "Sortino_esg_False","Sterling_esg_False",
-#          "Calmar_esg_False"]
 paths = ["Return_esg_False", "Sharpe_esg_False",
          "Sortino_esg_False","Sterling_esg_False",
          "Calmar_esg_False"]
