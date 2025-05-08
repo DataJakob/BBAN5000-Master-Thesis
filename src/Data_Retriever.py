@@ -106,7 +106,7 @@ class DataRetriever:
             self.volume_df[self.ticker_list[i]] = self.z_score(vol_series[self.ticker_list[i]])
             self.rolling_return_df[self.ticker_list[i]] = return_series[self.ticker_list[i]].rolling(40).mean().bfill()
             self.rolling_volatility_df[self.ticker_list[i]] = return_series[self.ticker_list[i]].rolling(40).std().bfill()
-        self.return_df[301, 3] = 0
+        # self.return_df[301, 3] = 0
         
         master_df = pd.concat([self.return_df, self.volume_df, self.rolling_return_df, self.rolling_volatility_df], axis = 1)
         master_df.to_csv("Data/Input.csv", index=False)
