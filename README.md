@@ -20,47 +20,6 @@
   This project analyzes the performance of optimized investment portfolios using attribution methods. It evaluates allocation and selection effects, generates visualizations, calculates financial metrics (P/L,     Sharpe, Sortino, Sterling ratios), and integrates ESG scoring analysis.
 </p>
 
-<h2>
-  📁 Project Structure
-</h2>
-
-<p>
-.
-<br>
-├── Data/
-<br>
-  └── [Input data and prediction weights] 
-<br>
-├── Expmnt/
-<br>
-│   └── [EDA and data fit notebooks]
-<br>
-├── Result/
-<br>
-│   └── [Tables and visualizations]
-<br>
-├── src/
-<br>
-│   └── Analysis
-<br>
-|       └── [.py scripts for analysis ]
-<br>
-│   └── Optimisation
-<br>
-|    └── [.py scripts for optimisation ]
-<br>
-│   └── DataRetrieval.py
-<br>
-├── .gitignore
-<br>
-├── LICENSE
-<br>
-├── main.py
-<br>
-├── README.md
-<br>
-├── requirements.txt
-
 
 <h2> 
   🛠 Instructions
